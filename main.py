@@ -62,8 +62,8 @@ def create_hotel(
 @app.patch("/hotels/{hotel_id}")
 def update_hotel(
     hotel_id: int,
-    title: str | None = Body(),
-    name: str | None = Body(),
+    title: str | None = Body(None),
+    name: str | None = Body(None),
 ):
     for h in hotels:
         if hotel_id == h["id"]:
