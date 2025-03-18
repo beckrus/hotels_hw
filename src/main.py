@@ -1,9 +1,14 @@
+import sys
+from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.concurrency import asynccontextmanager
 import uvicorn
 from concurrent.futures import ProcessPoolExecutor
 
-from hotels import router as hotels_router
+sys.path.append(str(Path(__file__).parent.parent))
+
+from src.api.hotels import router as hotels_router
 
 app = FastAPI()
 POOL = None

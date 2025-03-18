@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Body, HTTPException, Query
-from schemas.hotels import HotelPatchSchema, HotelSchema
+from src.api.dependencies import PaginationDep
+from src.schemas.hotels import HotelPatchSchema, HotelSchema
 
 
 hotels: list[dict[str, str | int]] = [
@@ -21,12 +22,11 @@ router = APIRouter(prefix="/hotels", tags=["Hotels"])
 
 @router.get("")
 def get_hotels(
+    pagination: PaginationDep,
     title: str | None = Query(description="Title", default=None),
     id: int | None = Query(description="id", default=None),
-    page: int = Query(description="Page", default=1, ge=1),
-    per_page: int = Query(description="Limit", default=3, ge=1, lt=101),
 ):
-    start_hotel = (page - 1) * per_page
+    start_hotel = (pagination.page - 1) * pagination.per_page
     _hotels = []
     if title or id:
         for h in hotels:
@@ -38,7 +38,7 @@ def get_hotels(
         _hotels = list(hotels)
     if start_hotel >= len(_hotels):
         raise HTTPException(status_code=416)
-    return _hotels[start_hotel:per_page]
+    return _hotels[start_hotel : pagination.per_page]
 
 
 @router.delete("/{hotel_id}")
