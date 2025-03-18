@@ -27,16 +27,17 @@ def get_hotels(
     per_page: int = Query(description="Limit", default=3),
 ):
     start_hotel = (page - 1) * per_page
-    if start_hotel >= len(hotels):
-        raise HTTPException(status_code=416)
-    if not title and not id:
-        return hotels[start_hotel : start_hotel + per_page]
     _hotels = []
-    for h in hotels:
-        if title and title == h["title"]:
-            _hotels.append(h)
-        if id and id == h["id"]:
-            _hotels.append(h)
+    if title or id:
+        for h in hotels:
+            if title and title == h["title"]:
+                _hotels.append(h)
+            if id and id == h["id"]:
+                _hotels.append(h)
+    else:
+        _hotels = list(hotels)
+    if start_hotel >= len(_hotels):
+        raise HTTPException(status_code=416)
     return _hotels[start_hotel:per_page]
 
 
