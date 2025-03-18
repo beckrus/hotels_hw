@@ -1,92 +1,105 @@
 from fastapi import APIRouter, Body, HTTPException, Query
+from src.models.hotels import HotelsOrm
 from src.api.dependencies import PaginationDep
 from src.schemas.hotels import HotelPatchSchema, HotelSchema
-
-
-hotels: list[dict[str, str | int]] = [
-    {"id": 1, "title": "Hotel A", "name": "A"},
-    {"id": 2, "title": "Hotel B", "name": "B"},
-    {"id": 3, "title": "Hotel C", "name": "C"},
-    {"id": 4, "title": "Hotel D", "name": "D"},
-    {"id": 5, "title": "Hotel E", "name": "E"},
-    {"id": 6, "title": "Hotel F", "name": "F"},
-    {"id": 7, "title": "Hotel G", "name": "G"},
-    {"id": 8, "title": "Hotel H", "name": "H"},
-    {"id": 9, "title": "Hotel I", "name": "I"},
-    {"id": 10, "title": "Hotel J", "name": "J"},
-]
-
+from src.database import async_session_maker
+from sqlalchemy import insert, select, delete, update
 
 router = APIRouter(prefix="/hotels", tags=["Hotels"])
 
 
 @router.get("")
-def get_hotels(
+async def get_hotels(
     pagination: PaginationDep,
     title: str | None = Query(description="Title", default=None),
-    id: int | None = Query(description="id", default=None),
+    location: str | None = Query(description="Location", default=None),
 ):
-    start_hotel = (pagination.page - 1) * pagination.per_page
-    _hotels = []
-    if title or id:
-        for h in hotels:
-            if title and title == h["title"]:
-                _hotels.append(h)
-            if id and id == h["id"]:
-                _hotels.append(h)
-    else:
-        _hotels = list(hotels)
-    if start_hotel >= len(_hotels):
-        raise HTTPException(status_code=416)
-    return _hotels[start_hotel : pagination.per_page]
+    offset = (pagination.page - 1) * pagination.per_page
+    async with async_session_maker() as session:
+        query = select(HotelsOrm)
+        if location:
+            query = query.where(HotelsOrm.location.ilike(f"%{location}%"))
+        if title:
+            query = query.where(HotelsOrm.title.ilike(f"%{title}%"))
+        query = query.limit(pagination.per_page).offset(offset)
+        result = await session.execute(query)
+        hotels = result.scalars().all()
+        return hotels
 
 
 @router.delete("/{hotel_id}")
-def delete_hotel(
+async def delete_hotel(
     hotel_id: int,
 ):
-    for h in hotels:
-        if hotel_id == h["id"]:
-            hotels.remove(h)
-            return {"status": "Ok"}
+    async with async_session_maker() as session:
+        query = select(HotelsOrm).filter_by(id=hotel_id)
+        res = await session.execute(query)
+        hotel = res.scalar_one_or_none()
+        if hotel:
+            await session.delete(hotel)
+            await session.commit()
+            return {"status": "OK"}
     raise HTTPException(status_code=404, detail="Item not found")
 
 
 @router.post("")
-def create_hotel(
+async def create_hotel(
     hotel_data: HotelSchema = Body(
         openapi_examples={
-            "1": {"summary": "Hotel K", "value": {"title": "Hotel K", "name": "K"}},
-            "2": {"summary": "Hotel L", "value": {"title": "Hotel L", "name": "L"}},
+            "1": {
+                "summary": "Hotel K",
+                "value": {"title": "Hotel K", "location": "street K"},
+            },
+            "2": {
+                "summary": "Hotel L",
+                "value": {"title": "Hotel L", "location": "street L"},
+            },
         }
     ),
 ):
-    id = int(hotels[-1]["id"]) + 1
-    hotels.append({"id": id, "title": hotel_data.title, "name": hotel_data.name})
-    return hotels[-1]
+    async with async_session_maker() as session:
+        add_hotel_stmt = insert(HotelsOrm).values(**hotel_data.model_dump())
+        await session.execute(add_hotel_stmt)
+        await session.commit()
+
+    return hotel_data
 
 
 # patch, put
 @router.patch("/{hotel_id}")
-def update_hotel(hotel_id: int, hotel_data: HotelPatchSchema):
-    for h in hotels:
-        if hotel_id == h["id"]:
-            if hotel_data.title:
-                h["title"] = hotel_data.title
-            if hotel_data.name:
-                h["name"] = hotel_data.name
-            return h
+async def update_hotel(hotel_id: int, hotel_data: HotelPatchSchema):
+    async with async_session_maker() as session:
+        query = select(HotelsOrm).filter_by(id=hotel_id)
+        result = await session.execute(query)
+        hotel = result.scalar_one_or_none()
+        if hotel:
+            stmt = (
+                update(HotelsOrm)
+                .filter_by(id=hotel_id)
+                .values(**hotel_data.model_dump())
+            )
+            await session.execute(stmt)
+            await session.commit()
+            return {"status": "OK"}
     raise HTTPException(status_code=404, detail="Item not found")
 
 
 @router.put("/{hotel_id}")
-def rewrite_hotel(
+async def rewrite_hotel(
     hotel_id: int,
     hotel_data: HotelSchema,
 ):
-    for h in hotels:
-        if hotel_id == h["id"]:
-            h["title"] = hotel_data.title
-            h["name"] = hotel_data.name
-            return h
+    async with async_session_maker() as session:
+        query = select(HotelsOrm).filter_by(id=hotel_id)
+        result = await session.execute(query)
+        hotel = result.scalar_one_or_none()
+        if hotel:
+            stmt = (
+                update(HotelsOrm)
+                .filter_by(id=hotel_id)
+                .values(**hotel_data.model_dump())
+            )
+            await session.execute(stmt)
+            await session.commit()
+            return {"status": "OK"}
     raise HTTPException(status_code=404, detail="Item not found")
