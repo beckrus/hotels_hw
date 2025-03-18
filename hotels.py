@@ -23,8 +23,8 @@ router = APIRouter(prefix="/hotels", tags=["Hotels"])
 def get_hotels(
     title: str | None = Query(description="Title", default=None),
     id: int | None = Query(description="id", default=None),
-    page: int = Query(description="Page", default=1),
-    per_page: int = Query(description="Limit", default=3),
+    page: int = Query(description="Page", default=1, ge=1),
+    per_page: int = Query(description="Limit", default=3, ge=1, lt=101),
 ):
     start_hotel = (page - 1) * per_page
     _hotels = []
