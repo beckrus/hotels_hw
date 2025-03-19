@@ -60,7 +60,7 @@ async def create_hotel(
         hotel = await hotels_repo.add(**hotel_data.model_dump())
         await hotels_repo.commit()
 
-        return hotel
+        return {"status": "OK", "data": hotel}
 
 
 # patch, put
@@ -71,7 +71,7 @@ async def update_hotel(hotel_id: int, hotel_data: HotelPatchSchema):
             hotels_repo = HotelsRepository(session)
             hotel = await hotels_repo.update(hotel_id, **hotel_data.model_dump())
             await hotels_repo.commit()
-            return hotel
+            return {"status": "OK", "data": hotel}
     except ItemNotFoundException:
         raise HTTPException(status_code=404, detail="Item not found")
 
@@ -86,6 +86,6 @@ async def rewrite_hotel(
             hotels_repo = HotelsRepository(session)
             hotel = await hotels_repo.update(hotel_id, **hotel_data.model_dump())
             await hotels_repo.commit()
-            return hotel
+            return {"status": "OK", "data": hotel}
     except ItemNotFoundException:
         raise HTTPException(status_code=404, detail="Item not found")
