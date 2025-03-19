@@ -2,9 +2,7 @@ import sys
 from pathlib import Path
 
 from fastapi import FastAPI
-from fastapi.concurrency import asynccontextmanager
 import uvicorn
-from concurrent.futures import ProcessPoolExecutor
 
 sys.path.append(str(Path(__file__).parent.parent))
 
@@ -12,14 +10,6 @@ from src.api.hotels import router as hotels_router
 
 app = FastAPI()
 POOL = None
-
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    global POOL
-    POOL = ProcessPoolExecutor(max_workers=1)
-    yield
-    ...
 
 
 app.include_router(hotels_router)

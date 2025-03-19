@@ -1,9 +1,11 @@
 from fastapi import APIRouter, Body, HTTPException, Query
+from src.repositories.exceptions import ItemNotFoundException
+from src.repositories.hotels import HotelsRepository
 from src.models.hotels import HotelsOrm
 from src.api.dependencies import PaginationDep
 from src.schemas.hotels import HotelPatchSchema, HotelSchema
 from src.database import async_session_maker
-from sqlalchemy import insert, select, delete, update
+from sqlalchemy import func, insert, select, delete, update
 
 router = APIRouter(prefix="/hotels", tags=["Hotels"])
 
@@ -14,17 +16,13 @@ async def get_hotels(
     title: str | None = Query(description="Title", default=None),
     location: str | None = Query(description="Location", default=None),
 ):
-    offset = (pagination.page - 1) * pagination.per_page
     async with async_session_maker() as session:
-        query = select(HotelsOrm)
-        if location:
-            query = query.where(HotelsOrm.location.ilike(f"%{location}%"))
-        if title:
-            query = query.where(HotelsOrm.title.ilike(f"%{title}%"))
-        query = query.limit(pagination.per_page).offset(offset)
-        result = await session.execute(query)
-        hotels = result.scalars().all()
-        return hotels
+        return await HotelsRepository(session).get_all(
+            location=location,
+            title=title,
+            offset=(pagination.page - 1) * pagination.per_page,
+            limit=pagination.per_page,
+        )
 
 
 @router.delete("/{hotel_id}")
@@ -58,30 +56,24 @@ async def create_hotel(
     ),
 ):
     async with async_session_maker() as session:
-        add_hotel_stmt = insert(HotelsOrm).values(**hotel_data.model_dump())
-        await session.execute(add_hotel_stmt)
-        await session.commit()
+        hotels_repo = HotelsRepository(session)
+        hotel = await hotels_repo.add(**hotel_data.model_dump())
+        await hotels_repo.commit()
 
-    return hotel_data
+        return hotel
 
 
 # patch, put
 @router.patch("/{hotel_id}")
 async def update_hotel(hotel_id: int, hotel_data: HotelPatchSchema):
-    async with async_session_maker() as session:
-        query = select(HotelsOrm).filter_by(id=hotel_id)
-        result = await session.execute(query)
-        hotel = result.scalar_one_or_none()
-        if hotel:
-            stmt = (
-                update(HotelsOrm)
-                .filter_by(id=hotel_id)
-                .values(**hotel_data.model_dump())
-            )
-            await session.execute(stmt)
-            await session.commit()
-            return {"status": "OK"}
-    raise HTTPException(status_code=404, detail="Item not found")
+    try:
+        async with async_session_maker() as session:
+            hotels_repo = HotelsRepository(session)
+            hotel = await hotels_repo.update(hotel_id, **hotel_data.model_dump())
+            await hotels_repo.commit()
+            return hotel
+    except ItemNotFoundException:
+        raise HTTPException(status_code=404, detail="Item not found")
 
 
 @router.put("/{hotel_id}")
@@ -89,17 +81,11 @@ async def rewrite_hotel(
     hotel_id: int,
     hotel_data: HotelSchema,
 ):
-    async with async_session_maker() as session:
-        query = select(HotelsOrm).filter_by(id=hotel_id)
-        result = await session.execute(query)
-        hotel = result.scalar_one_or_none()
-        if hotel:
-            stmt = (
-                update(HotelsOrm)
-                .filter_by(id=hotel_id)
-                .values(**hotel_data.model_dump())
-            )
-            await session.execute(stmt)
-            await session.commit()
-            return {"status": "OK"}
-    raise HTTPException(status_code=404, detail="Item not found")
+    try:
+        async with async_session_maker() as session:
+            hotels_repo = HotelsRepository(session)
+            hotel = await hotels_repo.update(hotel_id, **hotel_data.model_dump())
+            await hotels_repo.commit()
+            return hotel
+    except ItemNotFoundException:
+        raise HTTPException(status_code=404, detail="Item not found")
