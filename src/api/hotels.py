@@ -2,7 +2,7 @@ from fastapi import APIRouter, Body, HTTPException, Query
 from src.repositories.exceptions import ItemNotFoundException
 from src.repositories.hotels import HotelsRepository
 from src.api.dependencies import PaginationDep
-from src.schemas.hotels import HotelPatchSchema, HotelSchema
+from src.schemas.hotels import HotelAddSchema, HotelPatchSchema, HotelSchema
 from src.database import async_session_maker
 
 router = APIRouter(prefix="/hotels", tags=["Hotels"])
@@ -48,7 +48,7 @@ async def delete_hotel(
 
 @router.post("")
 async def create_hotel(
-    hotel_data: HotelSchema = Body(
+    hotel_data: HotelAddSchema = Body(
         openapi_examples={
             "1": {
                 "summary": "Hotel K",
@@ -85,7 +85,7 @@ async def update_hotel(hotel_id: int, hotel_data: HotelPatchSchema):
 @router.put("/{hotel_id}")
 async def rewrite_hotel(
     hotel_id: int,
-    hotel_data: HotelSchema,
+    hotel_data: HotelAddSchema,
 ):
     try:
         async with async_session_maker() as session:

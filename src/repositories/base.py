@@ -10,34 +10,40 @@ T = TypeVar("T")
 
 class BaseRepository(Generic[T]):
     model: Type[T]
+    scheme: Type[BaseModel]
 
     def __init__(self, session):
         self.session = session
 
-    async def get_all(self, *args, **kwargs):
+    async def get_all(self, *args, **kwargs) -> list[BaseModel]:
         query = select(self.model)
         result = await self.session.execute(query)
-        return result.scalars().all()
+        return [self.scheme.model_validate(model) for model in result.scalars().all()]
 
-    async def get_one_or_none(self, **filters_by):
+    async def get_one_or_none(self, **filters_by) -> BaseModel | None:
         query = select(self.model).filter_by(**filters_by)
         result = await self.session.execute(query)
-        return result.scalars().one_or_none()
+        model = result.scalars().one_or_none()
+        if model is None:
+            return None
+        return self.scheme.model_validate(model)
 
-    async def get_one_by_id(self, id: int):
+    async def get_one_by_id(self, id: int) -> BaseModel:
         try:
             query = select(self.model).filter_by(id=id)
             result = await self.session.execute(query)
-            return result.scalars().one()
+            return self.scheme.model_validate(result.scalars().one())
         except NoResultFound:
             raise ItemNotFoundException
 
-    async def add(self, data: BaseModel):
+    async def add(self, data: BaseModel) -> BaseModel:
         stmt = insert(self.model).values(**data.model_dump()).returning(self.model)
         result = await self.session.execute(stmt)
-        return result.scalars().one()
+        return self.scheme.model_validate(result.scalars().one())
 
-    async def edit(self, id: int, data: BaseModel, exclude_unset: bool = False):
+    async def edit(
+        self, id: int, data: BaseModel, exclude_unset: bool = False
+    ) -> BaseModel:
         try:
             stmt = (
                 update(self.model)
@@ -46,7 +52,7 @@ class BaseRepository(Generic[T]):
                 .returning(self.model)
             )
             result = await self.session.execute(stmt)
-            return result.scalars().one()
+            return self.scheme.model_validate(result.scalars().one())
         except NoResultFound:
             raise ItemNotFoundException
 
@@ -56,7 +62,7 @@ class BaseRepository(Generic[T]):
         if result.rowcount < 1:
             raise ItemNotFoundException
 
-    async def commit(self):
+    async def commit(self) -> None:
         await self.session.commit()
 
     # async def delete_by_filter(self, **filter_by) -> None:
