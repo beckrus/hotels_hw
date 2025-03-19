@@ -23,6 +23,15 @@ async def get_hotels(
         )
 
 
+@router.get("/{id}")
+async def get_hotel_by_id(id: int):
+    async with async_session_maker() as session:
+        try:
+            return await HotelsRepository(session).get_one_by_id(id=id)
+        except ItemNotFoundException:
+            raise HTTPException(status_code=404, detail="Item not found")
+
+
 @router.delete("/{hotel_id}")
 async def delete_hotel(
     hotel_id: int,
@@ -66,7 +75,7 @@ async def update_hotel(hotel_id: int, hotel_data: HotelPatchSchema):
     try:
         async with async_session_maker() as session:
             hotels_repo = HotelsRepository(session)
-            hotel = await hotels_repo.edit(hotel_id, hotel_data)
+            hotel = await hotels_repo.edit(hotel_id, hotel_data, exclude_unset=True)
             await hotels_repo.commit()
             return {"status": "OK", "data": hotel}
     except ItemNotFoundException:
