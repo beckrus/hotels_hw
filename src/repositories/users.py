@@ -1,9 +1,9 @@
 from pydantic import BaseModel
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy import insert
+from sqlalchemy import insert, select
 from src.models.users import UsersOrm
 from src.repositories.exceptions import DuplicateItemException
-from src.schemas.users import UserShowSchema
+from src.schemas.users import UserHashedSchema, UserShowSchema
 from src.repositories.base import BaseRepository
 
 
@@ -13,6 +13,7 @@ class UsersRepository(BaseRepository):
 
     async def add(self, data: BaseModel) -> UserShowSchema:
         try:
+            data.username = data.username.lower()
             stmt = insert(self.model).values(**data.model_dump()).returning(self.model)
             result = await self.session.execute(stmt)
             user_dict = result.scalars().one().__dict__
@@ -23,3 +24,14 @@ class UsersRepository(BaseRepository):
                 raise DuplicateItemException
             else:
                 raise e
+
+    async def get_one_with_hashed_password(self, username) -> BaseModel:
+        query = select(self.model).filter_by(username=username)
+        result = await self.session.execute(query)
+        model = result.scalars().one_or_none()
+        if model:
+            return UserHashedSchema.model_validate({
+                'id': model.id,
+                'password_hash': model.password_hash
+            })
+        return None

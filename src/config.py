@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     DB_HOST: str
     DB_PORT: int
 
-    SECRET: str
+    JWT_SECRET_KEY: str
     JWT_ALGORITHM: str
     ACCESS_TOKEN_EXPIRE_MINUTES: int
 

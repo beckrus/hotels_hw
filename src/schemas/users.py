@@ -1,5 +1,5 @@
 from typing import Annotated
-from pydantic import BaseModel, ConfigDict, EmailStr, SecretStr, StringConstraints
+from pydantic import BaseModel, ConfigDict, EmailStr, SecretStr, StringConstraints, constr 
 
 
 class UserSchema(BaseModel):
@@ -12,17 +12,26 @@ class UserSchema(BaseModel):
     is_active: bool = True
     is_superuser: bool = False
 
+    model_config = ConfigDict(from_attributes=True)
 
-class UserHashedSchema(UserSchema):
+class UserHashedSchema(BaseModel):
+    id: int
     password_hash: str
 
 
-class UserAddSchema(UserSchema):
+class UserRequestAddSchema(UserSchema):
     password: Annotated[SecretStr, StringConstraints(min_length=8)]
     password_confirm: Annotated[SecretStr, StringConstraints(min_length=8)]
+
+class UserHashedPwdAddSchema(UserSchema):
+    password_hash: str
 
 
 class UserShowSchema(UserSchema):
     id: int
 
     model_config = ConfigDict(from_attributes=True)
+
+class UserLoginSchema(BaseModel):
+    username: str
+    password: str
