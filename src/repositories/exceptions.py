@@ -4,3 +4,7 @@ class ItemNotFoundException(Exception):
 
 class TooManyItemFoundException(Exception):
     pass
+
+
+class DuplicateItemException(Exception):
+    pass

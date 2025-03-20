@@ -1,0 +1,28 @@
+from typing import Annotated
+from pydantic import BaseModel, ConfigDict, EmailStr, SecretStr, StringConstraints
+
+
+class UserSchema(BaseModel):
+    username: str
+    first_name: str | None = None
+    last_name: str | None = None
+    email: EmailStr | None = None
+    phone: Annotated[str, StringConstraints(min_length=6)] | None = None
+    is_varified: bool = False
+    is_active: bool = True
+    is_superuser: bool = False
+
+
+class UserHashedSchema(UserSchema):
+    password_hash: str
+
+
+class UserAddSchema(UserSchema):
+    password: Annotated[SecretStr, StringConstraints(min_length=8)]
+    password_confirm: Annotated[SecretStr, StringConstraints(min_length=8)]
+
+
+class UserShowSchema(UserSchema):
+    id: int
+
+    model_config = ConfigDict(from_attributes=True)
