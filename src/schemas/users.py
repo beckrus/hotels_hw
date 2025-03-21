@@ -46,5 +46,6 @@ class UserShowSchema(UserSchema):
     model_config = ConfigDict(from_attributes=True)
 
 class UserLoginSchema(BaseModel):
+    grant_type: str | None = None
     username: str
     password: str

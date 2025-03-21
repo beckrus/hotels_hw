@@ -1,5 +1,6 @@
 
-from fastapi import APIRouter, HTTPException, Response, Request
+from typing import Annotated
+from fastapi import APIRouter, Form, HTTPException, Response, Request
 from jwt import InvalidTokenError
 
 from api.dependencies import UserIdDep
@@ -36,7 +37,7 @@ async def create_user(data: UserRequestAddSchema):
         )
 
 @router.post("/login")
-async def authenticate_user(data: UserLoginSchema, response: Response):
+async def authenticate_user(data: Annotated[UserLoginSchema, Form()], response: Response):
     try:
         async with async_session_maker() as session:
             users_repo = UsersRepository(session)
@@ -57,7 +58,7 @@ async def authenticate_user(data: UserLoginSchema, response: Response):
     
 
 @router.get('/me', summary="Get Current User")
-async def get_me(request: Request, user_id:UserIdDep):
+async def get_me(request: Request, user_id: UserIdDep):
     try:
         async with async_session_maker() as session:
             user = await UsersRepository(session).get_one_by_id(id=user_id)
