@@ -1,11 +1,7 @@
-from typing import Annotated
-from fastapi import Depends
 from passlib.context import CryptContext
 from datetime import datetime, timedelta, timezone
 import jwt
-from jwt.exceptions import InvalidTokenError
 
-from src.services.exceptions import InvalidTokenDataError
 from src.config import settings
 
 
@@ -27,13 +23,9 @@ class AuthService:
         encoded_jwt = jwt.encode(to_encode, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
         return encoded_jwt
     
-    def get_current_user(self, token: str):
-        try:
+    def decode_token(self, token: str) -> dict[str,str|int]:
             payload = jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
-            user_id = payload.get("user_id")
-            if user_id is None:
-                raise InvalidTokenDataError
-            return user_id
-        except InvalidTokenError:
-            raise InvalidTokenDataError
-        
+            return payload
+
+
+

@@ -1,43 +1,16 @@
 
 from fastapi import APIRouter, HTTPException, Response, Request
+from jwt import InvalidTokenError
 
-from src.services.exceptions import InvalidTokenDataError
+from api.dependencies import UserIdDep
 from src.services.auth import AuthService
 from src.repositories.exceptions import DuplicateItemException, ItemNotFoundException
 from src.repositories.users import UsersRepository
 from src.schemas.users import UserHashedPwdAddSchema, UserLoginSchema, UserRequestAddSchema
 from src.database import async_session_maker
 
-router = APIRouter(prefix="/users", tags=["auth"])
+router = APIRouter(prefix="/auth", tags=["Auth"])
 
-
-
-# def authenticate_user(fake_db, username: str, password: str):
-#     user = get_user(fake_db, username)
-#     if not user:
-#         return False
-#     if not verify_password(password, user.hashed_password):
-#         return False
-#     return user
-
-@router.get("")
-async def get_users():  # Only admins
-    async with async_session_maker() as session:
-        users_repo = UsersRepository(session)
-        users = await users_repo.get_all()
-        return users
-    return {"status": "OK", "data": users}
-
-
-@router.get("/{user_id}")  # admin or the user itself
-async def get_user_by_id(user_id: int):
-    try:
-        async with async_session_maker() as session:
-            users_repo = UsersRepository(session)
-            user = await users_repo.get_one_by_id(user_id)
-            return user
-    except ItemNotFoundException:
-        raise HTTPException(status_code=404, detail="Item not found")
 
 
 @router.post("/register")
@@ -63,7 +36,7 @@ async def create_user(data: UserRequestAddSchema):
         )
 
 @router.post("/login")
-async def create_user(data: UserLoginSchema, response: Response):
+async def authenticate_user(data: UserLoginSchema, response: Response):
     try:
         async with async_session_maker() as session:
             users_repo = UsersRepository(session)
@@ -82,20 +55,10 @@ async def create_user(data: UserLoginSchema, response: Response):
             detail="User with these username, email or phone already exists",
         )
     
-@router.put("/{user_id}")  # admin or the user itself
-async def update_user(user_id: int, data: UserRequestAddSchema):
-    return {"message": f"Update user with id {user_id}"}
 
-@router.get('/me/')
-async def get_me(request: Request):
-    access_token = request.cookies.get('access_token')
-    if not access_token:
-        raise HTTPException(
-            status_code=401,
-            detail='Not authenticated'
-        )
+@router.get('/me', summary="Get Current User")
+async def get_me(request: Request, user_id:UserIdDep):
     try:
-        user_id = AuthService().get_current_user(access_token)
         async with async_session_maker() as session:
             user = await UsersRepository(session).get_one_by_id(id=user_id)
             if user is None:
@@ -104,5 +67,10 @@ async def get_me(request: Request):
                     detail='Could not validate credentials'
                 )
             return user
-    except (ItemNotFoundException, InvalidTokenDataError):
+    except (ItemNotFoundException):
         raise HTTPException(status_code=401, detail="Could not validate credentials")
+    
+@router.post('/logout', summary="Logout User")
+async def logout_user(request: Request, response: Response, user_id:UserIdDep):
+    response.delete_cookie("access_token")
+    return {"message": "Logged out"}

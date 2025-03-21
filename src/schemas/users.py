@@ -23,6 +23,19 @@ class UserRequestAddSchema(UserSchema):
     password: Annotated[SecretStr, StringConstraints(min_length=8)]
     password_confirm: Annotated[SecretStr, StringConstraints(min_length=8)]
 
+
+class UserRequestUpdateSchema(BaseModel):
+    first_name: str | None = None
+    last_name: str | None = None
+    email: EmailStr | None = None
+    phone: Annotated[str, StringConstraints(min_length=6)] | None = None
+    is_varified: bool | None = None
+    is_active: bool | None = None
+    is_superuser: bool | None = None
+    password: Annotated[SecretStr, StringConstraints(min_length=8)] | None = None
+    password_confirm: Annotated[SecretStr, StringConstraints(min_length=8)] | None = None
+
+
 class UserHashedPwdAddSchema(UserSchema):
     password_hash: str
 
