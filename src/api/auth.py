@@ -55,7 +55,13 @@ async def authenticate_user(data: Annotated[UserLoginSchema, Form()], response: 
             status_code=400,
             detail="User with these username, email or phone already exists",
         )
-    
+
+
+@router.post('/logout', summary="Logout User")
+async def logout_user(request: Request, response: Response, user_id:UserIdDep):
+    response.delete_cookie("access_token")
+    return {"message": "Logged out"}
+
 
 @router.get('/me', summary="Get Current User")
 async def get_me(request: Request, user_id: UserIdDep):
@@ -71,7 +77,3 @@ async def get_me(request: Request, user_id: UserIdDep):
     except (ItemNotFoundException):
         raise HTTPException(status_code=401, detail="Could not validate credentials")
     
-@router.post('/logout', summary="Logout User")
-async def logout_user(request: Request, response: Response, user_id:UserIdDep):
-    response.delete_cookie("access_token")
-    return {"message": "Logged out"}

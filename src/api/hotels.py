@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Body, HTTPException, Query
 from src.repositories.exceptions import ItemNotFoundException
 from src.repositories.hotels import HotelsRepository
-from src.api.dependencies import PaginationDep
+from src.api.dependencies import PaginationDep, UserIdAdminDep
 from src.schemas.hotels import HotelAddSchema, HotelPatchSchema, HotelSchema
 from src.database import async_session_maker
 
@@ -35,6 +35,7 @@ async def get_hotel_by_id(id: int):
 @router.delete("/{hotel_id}")
 async def delete_hotel(
     hotel_id: int,
+    auth_user_id: UserIdAdminDep
 ):
     try:
         async with async_session_maker() as session:
@@ -48,6 +49,7 @@ async def delete_hotel(
 
 @router.post("")
 async def create_hotel(
+    auth_user_id: UserIdAdminDep,
     hotel_data: HotelAddSchema = Body(
         openapi_examples={
             "1": {
@@ -60,6 +62,7 @@ async def create_hotel(
             },
         }
     ),
+    
 ):
     async with async_session_maker() as session:
         hotels_repo = HotelsRepository(session)
@@ -71,7 +74,7 @@ async def create_hotel(
 
 # patch, put
 @router.patch("/{hotel_id}")
-async def update_hotel(hotel_id: int, hotel_data: HotelPatchSchema):
+async def update_hotel(hotel_id: int, hotel_data: HotelPatchSchema,auth_user_id: UserIdAdminDep):
     try:
         async with async_session_maker() as session:
             hotels_repo = HotelsRepository(session)
@@ -84,6 +87,7 @@ async def update_hotel(hotel_id: int, hotel_data: HotelPatchSchema):
 
 @router.put("/{hotel_id}")
 async def rewrite_hotel(
+    auth_user_id: UserIdAdminDep,
     hotel_id: int,
     hotel_data: HotelAddSchema,
 ):

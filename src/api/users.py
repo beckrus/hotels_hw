@@ -1,7 +1,7 @@
 
 from fastapi import APIRouter, HTTPException
 
-from api.dependencies import UserIdDep
+from src.api.dependencies import UserIdAdminDep, UserIdDep
 from src.services.auth import AuthService
 from src.repositories.exceptions import ItemNotFoundException
 from src.repositories.users import UsersRepository
@@ -11,7 +11,7 @@ from src.database import async_session_maker
 router = APIRouter(prefix="/users", tags=["Users"])
 
 @router.get("")
-async def get_users():  # Only admins
+async def get_users(auth_user_id: UserIdAdminDep):  # Only admins
     async with async_session_maker() as session:
         users_repo = UsersRepository(session)
         users = await users_repo.get_all()
@@ -20,7 +20,7 @@ async def get_users():  # Only admins
 
 
 @router.get("/{user_id}")  # admin or the user itself
-async def get_user_by_id(user_id: int):
+async def get_user_by_id(user_id: int, auth_user_id: UserIdAdminDep):
     try:
         async with async_session_maker() as session:
             users_repo = UsersRepository(session)

@@ -18,11 +18,11 @@ class HotelsRepository(BaseRepository):
         query = select(self.model)
         if location:
             query = query.where(
-                func.lower(HotelsOrm.location).contains(location.strip().lower())
+                func.lower(self.model.location).contains(location.strip().lower())
             )
         if title:
             query = query.where(
-                func.lower(HotelsOrm.title).contains(title.strip().lower())
+                func.lower(self.model.title).contains(title.strip().lower())
             )
         query = query.limit(limit).offset(offset)
         # print(query.compile(compile_kwargs={"literal_binds": True}))  # debug
