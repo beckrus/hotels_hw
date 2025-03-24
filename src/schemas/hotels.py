@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict
 
 
 class HotelAddSchema(BaseModel):
@@ -13,5 +13,5 @@ class HotelSchema(HotelAddSchema):
 
 
 class HotelPatchSchema(BaseModel):
-    title: str | None = Field(default=None)
-    location: str | None = Field(default=None)
+    title: str | None = None
+    location: str | None = None

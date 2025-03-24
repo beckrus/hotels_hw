@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from sqlalchemy import delete, insert, select, update
 from sqlalchemy.exc import NoResultFound
 
-from src.repositories.exceptions import ItemNotFoundException, TooManyItemFoundException
+from src.repositories.exceptions import ItemNotFoundException
 
 T = TypeVar("T")
 
@@ -15,11 +15,15 @@ class BaseRepository(Generic[T]):
     def __init__(self, session):
         self.session = session
 
-    async def get_all(self, *args, **kwargs) -> list[BaseModel]:
-        query = select(self.model)
+    async def get_filtered(self, **filter_by) -> list[BaseModel]:
+        query = select(self.model).filter_by(**filter_by)
         result = await self.session.execute(query)
         return [self.scheme.model_validate(model) for model in result.scalars().all()]
+    
+    async def get_all(self, *args, **kwargs) -> list[BaseModel]:
+        return await self.get_filtered()
 
+    
     async def get_one_or_none(self, **filters_by) -> BaseModel | None:
         query = select(self.model).filter_by(**filters_by)
         result = await self.session.execute(query)
@@ -61,36 +65,3 @@ class BaseRepository(Generic[T]):
         result = await self.session.execute(stmt)
         if result.rowcount < 1:
             raise ItemNotFoundException
-
-    async def commit(self) -> None:
-        await self.session.commit()
-
-    # async def delete_by_filter(self, **filter_by) -> None:
-    #     filter_by = {k: v for k, v in filter_by.items() if v is not None}
-    #     stmt = delete(self.model).filter_by(**filter_by)
-    #     # print(stmt.compile(compile_kwargs={"literal_binds": True}))  # debug
-    #     result = await self.session.execute(stmt)
-    #     if result.rowcount < 1:
-    #         raise ItemNotFoundException
-    #     elif result.rowcount > 1:
-    #         raise TooManyItemFoundException
-
-    # async def edit_by_filter(self, data: BaseModel, **filter_by):
-    #     filter_by = {k: v for k, v in filter_by.items() if v is not None}
-    #     try:
-    #         stmt = (
-    #             update(self.model)
-    #             .filter_by(**filter_by)
-    #             .values(**data.model_dump())
-    #             .returning(self.model)
-    #         )
-    #         # print(stmt.compile(compile_kwargs={"literal_binds": True}))  # debug
-    #         result = await self.session.execute(stmt)
-    #         if result.rowcount < 1:
-    #             raise ItemNotFoundException
-    #         elif result.rowcount > 1:
-    #             raise TooManyItemFoundException
-
-    #         return result.scalars().one()
-    #     except NoResultFound:
-    #         raise ItemNotFoundException

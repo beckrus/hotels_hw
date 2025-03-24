@@ -4,36 +4,33 @@ from sqlalchemy.exc import NoResultFound
 
 from src.repositories.exceptions import ItemNotFoundException
 from src.models.rooms import RoomsOrm
-from src.schemas.rooms import RoomsAddDbSchema, RoomsAddSchema, RoomsPatchSchema, RoomsSchema
+from src.schemas.rooms import (
+    RoomsAddDbSchema,
+    RoomsAddSchema,
+    RoomsPatchSchema,
+    RoomsSchema,
+)
 from src.repositories.base import BaseRepository
+
 
 class RoomsRepository(BaseRepository):
     model = RoomsOrm
     scheme = RoomsSchema
 
-    async def get_all(
-        self,
-        hotel_id: str | None = None,
-    ) -> list[scheme]:
-        query = select(self.model).filter_by(hotel_id=hotel_id)
-        # print(query.compile(compile_kwargs={"literal_binds": True}))  # debug
-        result = await self.session.execute(query)
-        models = [
-            self.scheme.model_validate(model, from_attributes=True)
-            for model in result.scalars().all()
-        ]
-        return models
-    
-    async def add(self, hotel_id:int , data: RoomsAddSchema) -> RoomsSchema:
+    async def add(self, hotel_id: int, data: RoomsAddSchema) -> RoomsSchema:
         data = data.model_dump()
-        data['hotel_id'] = hotel_id
+        data["hotel_id"] = hotel_id
         room = RoomsAddDbSchema.model_validate(data)
         stmt = insert(self.model).values(**room.model_dump()).returning(self.model)
         result = await self.session.execute(stmt)
         return self.scheme.model_validate(result.scalars().one())
-    
+
     async def edit(
-        self, hotel_id: int, room_id:int, data: RoomsPatchSchema, exclude_unset: bool = False
+        self,
+        hotel_id: int,
+        room_id: int,
+        data: RoomsPatchSchema,
+        exclude_unset: bool = False,
     ) -> BaseModel:
         print(data)
         try:
@@ -47,8 +44,8 @@ class RoomsRepository(BaseRepository):
             return self.scheme.model_validate(result.scalars().one())
         except NoResultFound:
             raise ItemNotFoundException
-    
-    async def delete(self, hotel_id: int, room_id:int) -> None:
+
+    async def delete(self, hotel_id: int, room_id: int) -> None:
         stmt = delete(self.model).filter_by(hotel_id=hotel_id, id=room_id)
         result = await self.session.execute(stmt)
         if result.rowcount < 1:

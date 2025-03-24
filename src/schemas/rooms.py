@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict
 
 
 class RoomsAddSchema(BaseModel):
@@ -7,8 +7,10 @@ class RoomsAddSchema(BaseModel):
     price: int
     quantity: int
 
+
 class RoomsAddDbSchema(RoomsAddSchema):
     hotel_id: int
+
 
 class RoomsSchema(RoomsAddSchema):
     id: int

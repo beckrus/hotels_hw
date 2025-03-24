@@ -1,14 +1,14 @@
-
 from fastapi import APIRouter, HTTPException
 
 from src.api.dependencies import UserIdAdminDep, UserIdDep
 from src.services.auth import AuthService
 from src.repositories.exceptions import ItemNotFoundException
 from src.repositories.users import UsersRepository
-from src.schemas.users import  UserRequestUpdateSchema
+from src.schemas.users import UserRequestUpdateSchema
 from src.database import async_session_maker
 
 router = APIRouter(prefix="/users", tags=["Users"])
+
 
 @router.get("")
 async def get_users(auth_user_id: UserIdAdminDep):  # Only admins
@@ -28,10 +28,12 @@ async def get_user_by_id(user_id: int, auth_user_id: UserIdAdminDep):
             return user
     except ItemNotFoundException:
         raise HTTPException(status_code=404, detail="Item not found")
-    
+
 
 @router.patch("/{user_id}")  # admin or the user itself
-async def update_user(user_id: int, data: UserRequestUpdateSchema, auth_user_id: UserIdDep):
+async def update_user(
+    user_id: int, data: UserRequestUpdateSchema, auth_user_id: UserIdDep
+):
     if auth_user_id != user_id:
         raise HTTPException(status_code=403, detail="Forbidden")
     try:
@@ -42,8 +44,12 @@ async def update_user(user_id: int, data: UserRequestUpdateSchema, auth_user_id:
                 raise HTTPException(status_code=404, detail="Item not found")
             if data.password:
                 if data.password != data.password_confirm:
-                    raise HTTPException(status_code=400, detail="Passwords do not match")
-                data.password = AuthService().hash_password(data.password.get_secret_value())
+                    raise HTTPException(
+                        status_code=400, detail="Passwords do not match"
+                    )
+                data.password = AuthService().hash_password(
+                    data.password.get_secret_value()
+                )
             user = await users_repo.edit(user_id, data, exclude_unset=True)
             await users_repo.commit()
             return user

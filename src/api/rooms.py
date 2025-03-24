@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Body, HTTPException
 
-from repositories.exceptions import ItemNotFoundException
+from src.api.dependencies import DBDep
+from src.repositories.exceptions import ItemNotFoundException
 from src.schemas.rooms import RoomsAddSchema, RoomsPatchSchema
 from src.repositories.rooms import RoomsRepository
 from src.database import async_session_maker
@@ -9,14 +10,25 @@ router = APIRouter(prefix="/hotels", tags=["Rooms"])
 
 
 @router.get("/{hotel_id}/rooms")
-async def get_hotel_rooms(hotel_id: int):
-    async with async_session_maker() as session:
-        rooms = await RoomsRepository(session).get_all(hotel_id=hotel_id)
-        return {"status": "OK", "data": rooms}
+async def get_hotel_rooms(hotel_id: int, db:DBDep):
+    rooms = await db.rooms.get_filtered(hotel_id=hotel_id)
+    return {"status": "OK", "data": rooms}
+
+
+@router.get("/{hotel_id}/rooms/{room_id}")
+async def get_hotel_room(hotel_id: int, room_id: int, db:DBDep):
+    try:
+        room = await db.rooms.get_one_or_none(
+            hotel_id=hotel_id, id=room_id
+        )
+        return {"status": "OK", "data": room}
+    except ItemNotFoundException:
+        raise HTTPException(status_code=404, detail="Item not found")
 
 
 @router.post("/{hotel_id}/rooms")
 async def add_hotel_room(
+    db: DBDep,
     hotel_id: int,
     data: RoomsAddSchema = Body(
         openapi_examples={
@@ -26,7 +38,7 @@ async def add_hotel_room(
                     "title": "Luxury",
                     "description": "Indulge in the ultimate luxury experience in our exquisitely designed suite. This spacious room features a king-sized bed with plush, high-thread-count linens, a separate living area with elegant furnishings, and a private balcony offering stunning panoramic views of the city. The room is equipped with modern amenities, including a 55-inch flat-screen TV, high-speed Wi-Fi, and a Nespresso coffee machine for your convenience",
                     "price": 500,
-                    "quantity": 9
+                    "quantity": 9,
                 },
             },
             "2": {
@@ -50,34 +62,31 @@ async def add_hotel_room(
         }
     ),
 ):
-    async with async_session_maker() as session:
-        room = await RoomsRepository(session).add(hotel_id=hotel_id, data=data)
-        await session.commit()
-        return {"status": "OK", "data": room}
+    room = await db.rooms.add(hotel_id=hotel_id, data=data)
+    await db.commit()
+    return {"status": "OK", "data": room}
 
 
 @router.patch("/{hotel_id}/rooms/{room_id}")
-async def edit_hotel_room(hotel_id: int, room_id: int, data: RoomsPatchSchema):
+async def edit_hotel_room(hotel_id: int, room_id: int, data: RoomsPatchSchema, db:DBDep):
     try:
-        async with async_session_maker() as session:
-            room = await RoomsRepository(session).edit(
-                hotel_id=hotel_id, room_id=room_id, data=data
-            )
-            await session.commit()
-            return {"status": "OK", "data": room}
+        room = await db.rooms.edit(
+            hotel_id=hotel_id, room_id=room_id, data=data
+        )
+        await db.commit()
+        return {"status": "OK", "data": room}
     except ItemNotFoundException:
         raise HTTPException(status_code=404, detail="Item not found")
 
 
 @router.delete("/{hotel_id}/rooms/{room_id}")
-async def del_hotel_room(hotel_id: int, room_id: int):
+async def del_hotel_room(hotel_id: int, room_id: int, db:DBDep):
     try:
-        async with async_session_maker() as session:
-            room = await RoomsRepository(session).delete(
-                hotel_id=hotel_id,
-                room_id=room_id,
-            )
-            await session.commit()
-            return {"status": "OK"}
+        await db.rooms.delete(
+            hotel_id=hotel_id,
+            room_id=room_id,
+        )
+        await db.commit()
+        return {"status": "OK"}
     except ItemNotFoundException:
         raise HTTPException(status_code=404, detail="Item not found")

@@ -30,8 +30,7 @@ class UsersRepository(BaseRepository):
         result = await self.session.execute(query)
         model = result.scalars().one_or_none()
         if model:
-            return UserHashedSchema.model_validate({
-                'id': model.id,
-                'password_hash': model.password_hash
-            })
+            return UserHashedSchema.model_validate(
+                {"id": model.id, "password_hash": model.password_hash}
+            )
         return None

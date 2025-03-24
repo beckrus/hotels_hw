@@ -6,9 +6,9 @@ from sqlalchemy import pool
 from alembic import context
 
 from src.database import Base
-from src.models.users import UsersOrm
-from src.models.hotels import HotelsOrm
-from src.models.rooms import RoomsOrm
+from src.models.users import UsersOrm  # noqa: F401
+from src.models.hotels import HotelsOrm  # noqa: F401
+from src.models.rooms import RoomsOrm  # noqa: F401
 from src.config import settings
 
 # this is the Alembic Config object, which provides
