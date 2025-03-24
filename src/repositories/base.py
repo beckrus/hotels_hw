@@ -19,11 +19,10 @@ class BaseRepository(Generic[T]):
         query = select(self.model).filter_by(**filter_by)
         result = await self.session.execute(query)
         return [self.scheme.model_validate(model) for model in result.scalars().all()]
-    
+
     async def get_all(self, *args, **kwargs) -> list[BaseModel]:
         return await self.get_filtered()
 
-    
     async def get_one_or_none(self, **filters_by) -> BaseModel | None:
         query = select(self.model).filter_by(**filters_by)
         result = await self.session.execute(query)

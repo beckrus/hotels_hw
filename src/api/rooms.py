@@ -3,24 +3,20 @@ from fastapi import APIRouter, Body, HTTPException
 from src.api.dependencies import DBDep
 from src.repositories.exceptions import ItemNotFoundException
 from src.schemas.rooms import RoomsAddSchema, RoomsPatchSchema
-from src.repositories.rooms import RoomsRepository
-from src.database import async_session_maker
 
 router = APIRouter(prefix="/hotels", tags=["Rooms"])
 
 
 @router.get("/{hotel_id}/rooms")
-async def get_hotel_rooms(hotel_id: int, db:DBDep):
+async def get_hotel_rooms(hotel_id: int, db: DBDep):
     rooms = await db.rooms.get_filtered(hotel_id=hotel_id)
     return {"status": "OK", "data": rooms}
 
 
 @router.get("/{hotel_id}/rooms/{room_id}")
-async def get_hotel_room(hotel_id: int, room_id: int, db:DBDep):
+async def get_hotel_room(hotel_id: int, room_id: int, db: DBDep):
     try:
-        room = await db.rooms.get_one_or_none(
-            hotel_id=hotel_id, id=room_id
-        )
+        room = await db.rooms.get_one_or_none(hotel_id=hotel_id, id=room_id)
         return {"status": "OK", "data": room}
     except ItemNotFoundException:
         raise HTTPException(status_code=404, detail="Item not found")
@@ -68,11 +64,11 @@ async def add_hotel_room(
 
 
 @router.patch("/{hotel_id}/rooms/{room_id}")
-async def edit_hotel_room(hotel_id: int, room_id: int, data: RoomsPatchSchema, db:DBDep):
+async def edit_hotel_room(
+    hotel_id: int, room_id: int, data: RoomsPatchSchema, db: DBDep
+):
     try:
-        room = await db.rooms.edit(
-            hotel_id=hotel_id, room_id=room_id, data=data
-        )
+        room = await db.rooms.edit(hotel_id=hotel_id, room_id=room_id, data=data)
         await db.commit()
         return {"status": "OK", "data": room}
     except ItemNotFoundException:
@@ -80,7 +76,7 @@ async def edit_hotel_room(hotel_id: int, room_id: int, data: RoomsPatchSchema, d
 
 
 @router.delete("/{hotel_id}/rooms/{room_id}")
-async def del_hotel_room(hotel_id: int, room_id: int, db:DBDep):
+async def del_hotel_room(hotel_id: int, room_id: int, db: DBDep):
     try:
         await db.rooms.delete(
             hotel_id=hotel_id,

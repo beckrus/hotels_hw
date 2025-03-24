@@ -13,7 +13,6 @@ async def get_hotels(
     title: str | None = Query(description="Title", default=None),
     location: str | None = Query(description="Location", default=None),
 ):
-    
     return await db.hotels.get_all(
         location=location,
         title=title,
@@ -23,7 +22,7 @@ async def get_hotels(
 
 
 @router.get("/{id}")
-async def get_hotel_by_id(id: int,db: DBDep):
+async def get_hotel_by_id(id: int, db: DBDep):
     try:
         return await db.hotels.get_one_by_id(id=id)
     except ItemNotFoundException:
@@ -31,7 +30,7 @@ async def get_hotel_by_id(id: int,db: DBDep):
 
 
 @router.delete("/{hotel_id}")
-async def delete_hotel(hotel_id: int, auth_user_id: UserIdAdminDep,db: DBDep):
+async def delete_hotel(hotel_id: int, auth_user_id: UserIdAdminDep, db: DBDep):
     try:
         await db.hotels.delete(id=hotel_id)
         await db.commit()
@@ -65,7 +64,7 @@ async def create_hotel(
 # patch, put
 @router.patch("/{hotel_id}")
 async def update_hotel(
-    hotel_id: int, hotel_data: HotelPatchSchema, auth_user_id: UserIdAdminDep,db: DBDep
+    hotel_id: int, hotel_data: HotelPatchSchema, auth_user_id: UserIdAdminDep, db: DBDep
 ):
     try:
         hotel = await db.hotels.edit(hotel_id, hotel_data, exclude_unset=True)
@@ -77,10 +76,7 @@ async def update_hotel(
 
 @router.put("/{hotel_id}")
 async def rewrite_hotel(
-    auth_user_id: UserIdAdminDep,
-    hotel_id: int,
-    hotel_data: HotelAddSchema,
-    db: DBDep
+    auth_user_id: UserIdAdminDep, hotel_id: int, hotel_data: HotelAddSchema, db: DBDep
 ):
     try:
         hotel = await db.hotels.edit(hotel_id, hotel_data)

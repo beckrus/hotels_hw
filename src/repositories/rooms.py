@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from sqlalchemy import delete, insert, select, update
+from sqlalchemy import delete, insert, update
 from sqlalchemy.exc import NoResultFound
 
 from src.repositories.exceptions import ItemNotFoundException
@@ -32,7 +32,6 @@ class RoomsRepository(BaseRepository):
         data: RoomsPatchSchema,
         exclude_unset: bool = False,
     ) -> BaseModel:
-        print(data)
         try:
             stmt = (
                 update(self.model)
