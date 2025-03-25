@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Body, HTTPException
+from datetime import date
+from fastapi import APIRouter, Body, HTTPException, Query
 
-from src.api.dependencies import DBDep
+from src.api.dependencies import DBDep, UserIdAdminDep
 from src.repositories.exceptions import ItemNotFoundException
 from src.schemas.rooms import RoomsAddSchema, RoomsPatchSchema
 
@@ -8,8 +9,10 @@ router = APIRouter(prefix="/hotels", tags=["Rooms"])
 
 
 @router.get("/{hotel_id}/rooms")
-async def get_hotel_rooms(hotel_id: int, db: DBDep):
-    rooms = await db.rooms.get_filtered(hotel_id=hotel_id)
+async def get_hotel_rooms(hotel_id: int, db: DBDep,
+                          date_from: date = Query(example='2025-03-24'), 
+                          date_to: date = Query(example='2025-03-26')):
+    rooms = await db.rooms.get_filtered_by_time(hotel_id=hotel_id, date_from=date_from, date_to=date_to)
     return {"status": "OK", "data": rooms}
 
 
@@ -25,6 +28,7 @@ async def get_hotel_room(hotel_id: int, room_id: int, db: DBDep):
 @router.post("/{hotel_id}/rooms")
 async def add_hotel_room(
     db: DBDep,
+    auth_user_id: UserIdAdminDep,
     hotel_id: int,
     data: RoomsAddSchema = Body(
         openapi_examples={
@@ -65,7 +69,11 @@ async def add_hotel_room(
 
 @router.patch("/{hotel_id}/rooms/{room_id}")
 async def edit_hotel_room(
-    hotel_id: int, room_id: int, data: RoomsPatchSchema, db: DBDep
+    hotel_id: int, 
+    room_id: int, 
+    data: RoomsPatchSchema, 
+    db: DBDep,
+    auth_user_id: UserIdAdminDep,
 ):
     try:
         room = await db.rooms.edit(hotel_id=hotel_id, room_id=room_id, data=data)
@@ -76,7 +84,7 @@ async def edit_hotel_room(
 
 
 @router.delete("/{hotel_id}/rooms/{room_id}")
-async def del_hotel_room(hotel_id: int, room_id: int, db: DBDep):
+async def del_hotel_room(auth_user_id: UserIdAdminDep,hotel_id: int, room_id: int, db: DBDep):
     try:
         await db.rooms.delete(
             hotel_id=hotel_id,

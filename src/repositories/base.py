@@ -15,8 +15,12 @@ class BaseRepository(Generic[T]):
     def __init__(self, session):
         self.session = session
 
-    async def get_filtered(self, **filter_by) -> list[BaseModel]:
-        query = select(self.model).filter_by(**filter_by)
+    async def get_filtered(self, *filter, **filter_by) -> list[BaseModel]:
+        print(*filter)
+        query = (select(self.model)
+                 .filter(*filter)
+                 .filter_by(**filter_by)
+                 )
         result = await self.session.execute(query)
         return [self.scheme.model_validate(model) for model in result.scalars().all()]
 

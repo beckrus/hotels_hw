@@ -1,3 +1,4 @@
+from datetime import date
 from fastapi import APIRouter, Body, HTTPException, Query
 from src.repositories.exceptions import ItemNotFoundException
 from src.api.dependencies import DBDep, PaginationDep, UserIdAdminDep
@@ -12,12 +13,22 @@ async def get_hotels(
     db: DBDep,
     title: str | None = Query(description="Title", default=None),
     location: str | None = Query(description="Location", default=None),
+    date_from: date = Query(example='2025-03-24'), 
+    date_to: date = Query(example='2025-03-26')
 ):
-    return await db.hotels.get_all(
+    # return await db.hotels.get_all(
+    #     location=location,
+    #     title=title,
+    #     offset=(pagination.page - 1) * pagination.per_page,
+    #     limit=pagination.per_page,
+    # )
+    return await db.hotels.get_filtered_by_time(
         location=location,
         title=title,
         offset=(pagination.page - 1) * pagination.per_page,
         limit=pagination.per_page,
+        date_from=date_from,
+        date_to=date_to
     )
 
 

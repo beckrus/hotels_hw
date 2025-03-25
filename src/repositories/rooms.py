@@ -1,7 +1,9 @@
+from datetime import date
 from pydantic import BaseModel
 from sqlalchemy import delete, insert, update
 from sqlalchemy.exc import NoResultFound
 
+from src.repositories.utils import rooms_ids_for_booking
 from src.repositories.exceptions import ItemNotFoundException
 from src.models.rooms import RoomsOrm
 from src.schemas.rooms import (
@@ -49,3 +51,10 @@ class RoomsRepository(BaseRepository):
         result = await self.session.execute(stmt)
         if result.rowcount < 1:
             raise ItemNotFoundException
+        
+    async def get_filtered_by_time(self, hotel_id:int, date_from:date, date_to:date):
+        query = rooms_ids_for_booking(date_to=date_to,
+                                      date_from=date_from,
+                                      hotel_id=hotel_id)
+        print(query)
+        return await self.get_filtered(RoomsOrm.id.in_(query))
