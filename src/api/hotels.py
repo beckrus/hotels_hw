@@ -25,8 +25,8 @@ async def get_hotels(
     return await db.hotels.get_filtered_by_time(
         location=location,
         title=title,
-        offset=(pagination.page - 1) * pagination.per_page,
         limit=pagination.per_page,
+        offset=(pagination.page - 1) * pagination.per_page,
         date_from=date_from,
         date_to=date_to
     )
