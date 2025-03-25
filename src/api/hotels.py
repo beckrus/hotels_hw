@@ -13,8 +13,8 @@ async def get_hotels(
     db: DBDep,
     title: str | None = Query(description="Title", default=None),
     location: str | None = Query(description="Location", default=None),
-    date_from: date = Query(example='2025-03-24'), 
-    date_to: date = Query(example='2025-03-26')
+    date_from: date = Query(example="2025-03-24"),
+    date_to: date = Query(example="2025-03-26"),
 ):
     # return await db.hotels.get_all(
     #     location=location,
@@ -28,7 +28,7 @@ async def get_hotels(
         limit=pagination.per_page,
         offset=(pagination.page - 1) * pagination.per_page,
         date_from=date_from,
-        date_to=date_to
+        date_to=date_to,
     )
 
 

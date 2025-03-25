@@ -7,6 +7,7 @@ class BookingsAddSchema(BaseModel):
     date_from: date
     date_to: date
 
+
 class BookingsDbAddSchema(BookingsAddSchema):
     user_id: int
     price: int

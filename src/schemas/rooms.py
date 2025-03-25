@@ -6,9 +6,17 @@ class RoomsAddSchema(BaseModel):
     description: str | None
     price: int
     quantity: int
+    facilities: list[int] | None = None
 
 
-class RoomsAddDbSchema(RoomsAddSchema):
+class RoomsAddDBSchema(BaseModel):
+    title: str
+    description: str | None
+    price: int
+    quantity: int
+
+
+class RoomsDbSchema(RoomsAddDBSchema):
     hotel_id: int
 
 
@@ -19,6 +27,14 @@ class RoomsSchema(RoomsAddSchema):
 
 
 class RoomsPatchSchema(BaseModel):
+    title: str | None = None
+    description: str | None = None
+    price: int | None = None
+    quantity: int | None = None
+    facilities: list[int] | None = None
+
+
+class RoomsPatchDbSchema(BaseModel):
     title: str | None = None
     description: str | None = None
     price: int | None = None

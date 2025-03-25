@@ -1,6 +1,7 @@
 from datetime import date
 from fastapi import APIRouter, Body, HTTPException, Query
 
+from schemas.facilities import RoomsFacilitiesAddSchema
 from src.api.dependencies import DBDep, UserIdAdminDep
 from src.repositories.exceptions import ItemNotFoundException
 from src.schemas.rooms import RoomsAddSchema, RoomsPatchSchema
@@ -9,10 +10,15 @@ router = APIRouter(prefix="/hotels", tags=["Rooms"])
 
 
 @router.get("/{hotel_id}/rooms")
-async def get_hotel_rooms(hotel_id: int, db: DBDep,
-                          date_from: date = Query(example='2025-03-24'), 
-                          date_to: date = Query(example='2025-03-26')):
-    rooms = await db.rooms.get_filtered_by_time(hotel_id=hotel_id, date_from=date_from, date_to=date_to)
+async def get_hotel_rooms(
+    hotel_id: int,
+    db: DBDep,
+    date_from: date = Query(example="2025-03-24"),
+    date_to: date = Query(example="2025-03-26"),
+):
+    rooms = await db.rooms.get_filtered_by_time(
+        hotel_id=hotel_id, date_from=date_from, date_to=date_to
+    )
     return {"status": "OK", "data": rooms}
 
 
@@ -63,28 +69,76 @@ async def add_hotel_room(
     ),
 ):
     room = await db.rooms.add(hotel_id=hotel_id, data=data)
+    facilities_data = [
+        RoomsFacilitiesAddSchema.model_validate({"room_id": room.id, "facility_id": n})
+        for n in data.facilities
+    ]
+    await db.rooms_facilities.add_bulk(facilities_data)
     await db.commit()
     return {"status": "OK", "data": room}
 
 
 @router.patch("/{hotel_id}/rooms/{room_id}")
 async def edit_hotel_room(
-    hotel_id: int, 
-    room_id: int, 
-    data: RoomsPatchSchema, 
+    hotel_id: int,
+    room_id: int,
+    data: RoomsPatchSchema,
     db: DBDep,
     auth_user_id: UserIdAdminDep,
 ):
     try:
-        room = await db.rooms.edit(hotel_id=hotel_id, room_id=room_id, data=data)
+        room = await db.rooms.edit(
+            hotel_id=hotel_id, room_id=room_id, data=data, exclude_unset=True
+        )
+        room_facilities_add = [
+            RoomsFacilitiesAddSchema.model_validate(
+                {"room_id": room.id, "facility_id": n}
+            )
+            for n in data.facilities
+        ]
+        await db.rooms_facilities.add_bulk(room_facilities_add)
         await db.commit()
         return {"status": "OK", "data": room}
     except ItemNotFoundException:
         raise HTTPException(status_code=404, detail="Item not found")
 
 
+@router.put("/{hotel_id}/rooms/{room_id}")
+async def replace_hotel_room(
+    hotel_id: int,
+    room_id: int,
+    data: RoomsPatchSchema,
+    db: DBDep,
+    auth_user_id: UserIdAdminDep,
+):
+    try:
+        room = await db.rooms.edit(
+            hotel_id=hotel_id, room_id=room_id, data=data, exclude_unset=True
+        )
+        room_facilities = await db.rooms_facilities.get_filtered(room_id=room_id)
+        room_facilities_delete = [
+            n.id for n in room_facilities if n.facility_id not in data.facilities
+        ]
+        room_facilities_add = [
+            RoomsFacilitiesAddSchema.model_validate(
+                {"room_id": room.id, "facility_id": n}
+            )
+            for n in data.facilities
+            if n not in [f.facility_id for f in room_facilities]
+        ]
+        await db.rooms_facilities.delete_bulk(room_facilities_delete)
+        await db.rooms_facilities.add_bulk(room_facilities_add)
+        await db.commit()
+        return {"status": "OK", "data": room}
+    except ItemNotFoundException:
+        raise HTTPException(status_code=404, detail="Item not found")
+
+
+
 @router.delete("/{hotel_id}/rooms/{room_id}")
-async def del_hotel_room(auth_user_id: UserIdAdminDep,hotel_id: int, room_id: int, db: DBDep):
+async def del_hotel_room(
+    auth_user_id: UserIdAdminDep, hotel_id: int, room_id: int, db: DBDep
+):
     try:
         await db.rooms.delete(
             hotel_id=hotel_id,

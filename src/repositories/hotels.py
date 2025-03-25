@@ -36,27 +36,23 @@ class HotelsRepository(BaseRepository):
             for hotel in result.scalars().all()
         ]
         return hotels
-    
+
     async def get_filtered_by_time(
-            self, 
-            date_from:date, 
-            date_to:date,
-            offset: int,
-            limit: int,
-            location: str | None = None,
-            title: str | None = None
+        self,
+        date_from: date,
+        date_to: date,
+        offset: int,
+        limit: int,
+        location: str | None = None,
+        title: str | None = None,
     ):
-        rooms_ids = rooms_ids_for_booking(date_to=date_to,
-                                      date_from=date_from)
+        rooms_ids = rooms_ids_for_booking(date_to=date_to, date_from=date_from)
         hotels_ids = (
             select(RoomsOrm.hotel_id)
             .select_from(RoomsOrm)
             .filter(RoomsOrm.id.in_(rooms_ids))
         )
-        query = (select(HotelsOrm)
-                 .filter((HotelsOrm.id.in_(hotels_ids)))
-
-        )
+        query = select(HotelsOrm).filter((HotelsOrm.id.in_(hotels_ids)))
         if location:
             query = query.where(
                 func.lower(self.model.location).contains(location.strip().lower())

@@ -1,7 +1,8 @@
 from typing import Type, TypeVar, Generic
 from pydantic import BaseModel
-from sqlalchemy import delete, insert, select, update
+from sqlalchemy import delete, select, update
 from sqlalchemy.exc import NoResultFound
+from sqlalchemy.dialects.postgresql import insert
 
 from src.repositories.exceptions import ItemNotFoundException
 
@@ -16,10 +17,7 @@ class BaseRepository(Generic[T]):
         self.session = session
 
     async def get_filtered(self, *filter, **filter_by) -> list[BaseModel]:
-        query = (select(self.model)
-                 .filter(*filter)
-                 .filter_by(**filter_by)
-                 )
+        query = select(self.model).filter(*filter).filter_by(**filter_by)
         result = await self.session.execute(query)
         return [self.scheme.model_validate(model) for model in result.scalars().all()]
 
@@ -42,10 +40,18 @@ class BaseRepository(Generic[T]):
         except NoResultFound:
             raise ItemNotFoundException
 
-    async def add(self, data: BaseModel) -> BaseModel:
+    async def add(self, data: BaseModel) -> None:
         stmt = insert(self.model).values(**data.model_dump()).returning(self.model)
         result = await self.session.execute(stmt)
         return self.scheme.model_validate(result.scalars().one())
+
+    async def add_bulk(self, data: list[BaseModel]) -> BaseModel:
+        stmt = (
+            insert(self.model)
+            .values([item.model_dump() for item in data])
+            .on_conflict_do_nothing()
+        )
+        await self.session.execute(stmt)
 
     async def edit(
         self, id: int, data: BaseModel, exclude_unset: bool = False
@@ -65,5 +71,12 @@ class BaseRepository(Generic[T]):
     async def delete(self, id) -> None:
         stmt = delete(self.model).filter_by(id=id)
         result = await self.session.execute(stmt)
+        if result.rowcount < 1:
+            raise ItemNotFoundException
+
+    async def delete_bulk(self, ids: list[int]) -> None:
+        stmt = delete(self.model).filter(self.model.id.in_(ids))
+        result = await self.session.execute(stmt)
+
         if result.rowcount < 1:
             raise ItemNotFoundException

@@ -9,7 +9,7 @@ Create Date: 2025-03-25 15:11:44.427990
 from typing import Sequence, Union
 
 from alembic import op
-import sqlalchemy as sa
+import sqlalchemy as sa # noqa F401
 
 
 # revision identifiers, used by Alembic.

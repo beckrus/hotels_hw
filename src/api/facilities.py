@@ -11,7 +11,7 @@ async def get_facilities(
     db: DBDep,
     name: str | None = Query(description="Name", default=None),
 ):
-    filter = {"name":name} if name else {}
+    filter = {"name": name} if name else {}
     return await db.facilities.get_filtered(**filter)
 
 
@@ -21,8 +21,6 @@ async def get_facility_by_id(facility_id: int, db: DBDep):
         return await db.facilities.get_one_by_id(id=facility_id)
     except ItemNotFoundException:
         raise HTTPException(status_code=404, detail="Item not found")
-
-
 
 
 @router.post("")

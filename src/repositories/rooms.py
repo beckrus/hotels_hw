@@ -7,8 +7,9 @@ from src.repositories.utils import rooms_ids_for_booking
 from src.repositories.exceptions import ItemNotFoundException
 from src.models.rooms import RoomsOrm
 from src.schemas.rooms import (
-    RoomsAddDbSchema,
+    RoomsDbSchema,
     RoomsAddSchema,
+    RoomsPatchDbSchema,
     RoomsPatchSchema,
     RoomsSchema,
 )
@@ -20,9 +21,10 @@ class RoomsRepository(BaseRepository):
     scheme = RoomsSchema
 
     async def add(self, hotel_id: int, data: RoomsAddSchema) -> RoomsSchema:
+        print(data)
         data = data.model_dump()
         data["hotel_id"] = hotel_id
-        room = RoomsAddDbSchema.model_validate(data)
+        room = RoomsDbSchema.model_validate(data)
         stmt = insert(self.model).values(**room.model_dump()).returning(self.model)
         result = await self.session.execute(stmt)
         return self.scheme.model_validate(result.scalars().one())
@@ -34,11 +36,16 @@ class RoomsRepository(BaseRepository):
         data: RoomsPatchSchema,
         exclude_unset: bool = False,
     ) -> BaseModel:
+        room = RoomsPatchDbSchema.model_validate(
+            data.model_dump(exclude_unset=exclude_unset)
+        )
+        if not bool(room.model_dump(exclude_unset=exclude_unset)):
+            return await self.get_one_by_id(id=room_id)
         try:
             stmt = (
                 update(self.model)
                 .filter_by(hotel_id=hotel_id, id=room_id)
-                .values(**data.model_dump(exclude_unset=exclude_unset))
+                .values(**room.model_dump(exclude_unset=exclude_unset))
                 .returning(self.model)
             )
             result = await self.session.execute(stmt)
@@ -51,10 +58,10 @@ class RoomsRepository(BaseRepository):
         result = await self.session.execute(stmt)
         if result.rowcount < 1:
             raise ItemNotFoundException
-        
-    async def get_filtered_by_time(self, hotel_id:int, date_from:date, date_to:date):
-        query = rooms_ids_for_booking(date_to=date_to,
-                                      date_from=date_from,
-                                      hotel_id=hotel_id)
+
+    async def get_filtered_by_time(self, hotel_id: int, date_from: date, date_to: date):
+        query = rooms_ids_for_booking(
+            date_to=date_to, date_from=date_from, hotel_id=hotel_id
+        )
         print(query)
         return await self.get_filtered(RoomsOrm.id.in_(query))
