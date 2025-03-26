@@ -4,7 +4,7 @@ from fastapi import APIRouter, Body, HTTPException, Query
 from schemas.facilities import RoomsFacilitiesAddSchema
 from src.api.dependencies import DBDep, UserIdAdminDep
 from src.repositories.exceptions import ItemNotFoundException
-from src.schemas.rooms import RoomsAddSchema, RoomsPatchSchema
+from src.schemas.rooms import RoomsAddSchema, RoomsPatchSchema, RoomsPutSchema
 
 router = APIRouter(prefix="/hotels", tags=["Rooms"])
 
@@ -25,7 +25,7 @@ async def get_hotel_rooms(
 @router.get("/{hotel_id}/rooms/{room_id}")
 async def get_hotel_room(hotel_id: int, room_id: int, db: DBDep):
     try:
-        room = await db.rooms.get_one_or_none(hotel_id=hotel_id, id=room_id)
+        room = await db.rooms.get_one_by_id(hotel_id=hotel_id, id=room_id)
         return {"status": "OK", "data": room}
     except ItemNotFoundException:
         raise HTTPException(status_code=404, detail="Item not found")
@@ -86,6 +86,13 @@ async def edit_hotel_room(
     db: DBDep,
     auth_user_id: UserIdAdminDep,
 ):
+    """
+    Edit specific details of a hotel room.
+
+    This endpoint allows administrators to update partial information about a room,
+    such as its title, description, price, quantity, or facilities(add new facilities).
+
+    """
     try:
         room = await db.rooms.edit(
             hotel_id=hotel_id, room_id=room_id, data=data, exclude_unset=True
@@ -107,10 +114,16 @@ async def edit_hotel_room(
 async def replace_hotel_room(
     hotel_id: int,
     room_id: int,
-    data: RoomsPatchSchema,
+    data: RoomsPutSchema,
     db: DBDep,
     auth_user_id: UserIdAdminDep,
 ):
+    """
+    Replace all details of a hotel room.
+
+    This endpoint allows administrators to completely overwrite the details of a room,
+    including its title, description, price, quantity, and facilities.
+    """
     try:
         room = await db.rooms.edit(
             hotel_id=hotel_id, room_id=room_id, data=data, exclude_unset=True
@@ -126,8 +139,10 @@ async def replace_hotel_room(
             for n in data.facilities
             if n not in [f.facility_id for f in room_facilities]
         ]
-        await db.rooms_facilities.delete_bulk(room_facilities_delete)
-        await db.rooms_facilities.add_bulk(room_facilities_add)
+        if room_facilities_delete:
+            await db.rooms_facilities.delete_bulk(room_facilities_delete)
+        if room_facilities_add:
+            await db.rooms_facilities.add_bulk(room_facilities_add)
         await db.commit()
         return {"status": "OK", "data": room}
     except ItemNotFoundException:

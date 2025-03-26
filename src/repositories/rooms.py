@@ -1,7 +1,8 @@
 from datetime import date
 from pydantic import BaseModel
-from sqlalchemy import delete, insert, update
+from sqlalchemy import delete, insert, select, update
 from sqlalchemy.exc import NoResultFound
+from sqlalchemy.orm import selectinload, joinedload
 
 from src.repositories.utils import rooms_ids_for_booking
 from src.repositories.exceptions import ItemNotFoundException
@@ -12,6 +13,7 @@ from src.schemas.rooms import (
     RoomsPatchDbSchema,
     RoomsPatchSchema,
     RoomsSchema,
+    RoomsWithRel,
 )
 from src.repositories.base import BaseRepository
 
@@ -60,8 +62,21 @@ class RoomsRepository(BaseRepository):
             raise ItemNotFoundException
 
     async def get_filtered_by_time(self, hotel_id: int, date_from: date, date_to: date):
-        query = rooms_ids_for_booking(
+        rooms_ids = rooms_ids_for_booking(
             date_to=date_to, date_from=date_from, hotel_id=hotel_id
         )
-        print(query)
-        return await self.get_filtered(RoomsOrm.id.in_(query))
+        query = (
+            select(self.model)
+            .options(joinedload(self.model.facilities))
+            .filter(self.model.id.in_(rooms_ids))
+        )
+        result = await self.session.execute(query)
+        return [RoomsWithRel.model_validate(model) for model in result.unique().scalars().all()]
+
+    async def get_one_by_id(self, hotel_id:int, id: int) -> RoomsWithRel:
+        try:
+            query = select(self.model).options(selectinload(self.model.facilities)).filter_by(hotel_id=hotel_id, id=id)
+            result = await self.session.execute(query)
+            return RoomsWithRel.model_validate(result.scalars().one())
+        except NoResultFound:
+            raise ItemNotFoundException
