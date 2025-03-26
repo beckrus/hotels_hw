@@ -25,7 +25,7 @@ async def get_hotel_rooms(
 @router.get("/{hotel_id}/rooms/{room_id}")
 async def get_hotel_room(hotel_id: int, room_id: int, db: DBDep):
     try:
-        room = await db.rooms.get_one_by_id(hotel_id=hotel_id, id=room_id)
+        room = await db.rooms.get_one_by_id_with_rel(hotel_id=hotel_id, id=room_id)
         return {"status": "OK", "data": room}
     except ItemNotFoundException:
         raise HTTPException(status_code=404, detail="Item not found")
@@ -147,7 +147,6 @@ async def replace_hotel_room(
         return {"status": "OK", "data": room}
     except ItemNotFoundException:
         raise HTTPException(status_code=404, detail="Item not found")
-
 
 
 @router.delete("/{hotel_id}/rooms/{room_id}")

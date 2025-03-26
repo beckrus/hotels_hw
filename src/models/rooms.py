@@ -14,7 +14,6 @@ class RoomsOrm(Base):
     quantity: Mapped[int]
     image_id: Mapped[str | None]
 
-    facilities: Mapped[list["FacilitiesOrm"]] = relationship(
-        back_populates="rooms",
-        secondary="rooms_facilities"
+    facilities: Mapped[list["FacilitiesOrm"]] = relationship(  # noqa F821
+        back_populates="rooms", secondary="rooms_facilities"
     )

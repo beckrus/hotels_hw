@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import insert, select
+from src.repositories.mappers.mappers import UsersDataMapper
 from src.models.users import UsersOrm
 from src.repositories.exceptions import DuplicateItemException
 from src.schemas.users import UserHashedSchema, UserShowSchema
@@ -9,7 +10,7 @@ from src.repositories.base import BaseRepository
 
 class UsersRepository(BaseRepository):
     model = UsersOrm
-    scheme = UserShowSchema
+    mapper = UsersDataMapper
 
     async def add(self, data: BaseModel) -> UserShowSchema:
         try:
@@ -18,7 +19,7 @@ class UsersRepository(BaseRepository):
             result = await self.session.execute(stmt)
             user_dict = result.scalars().one().__dict__
             user_dict.pop("password_hash")
-            return self.scheme.model_validate(user_dict)
+            return self.mapper.map_to_domain_entity(user_dict)
         except IntegrityError as e:
             if e.orig.sqlstate == "23505":
                 raise DuplicateItemException

@@ -1,13 +1,16 @@
+from src.repositories.mappers.mappers import (
+    FacilitiesDataMapper,
+    RoomsFacilitiesDataMapper,
+)
 from src.models.facilities import FacilitiesOrm, RoomsFacilitiesOrm
-from src.schemas.facilities import FacilitiesSchema, RoomsFacilitiesSchema
 from src.repositories.base import BaseRepository
 
 
 class FacilitiesRepository(BaseRepository):
     model = FacilitiesOrm
-    scheme = FacilitiesSchema
+    mapper = FacilitiesDataMapper
 
 
 class RoomsFacilitiesRepository(BaseRepository):
     model = RoomsFacilitiesOrm
-    scheme = RoomsFacilitiesSchema
+    mapper = RoomsFacilitiesDataMapper

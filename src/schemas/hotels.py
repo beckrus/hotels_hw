@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel
 
 
 class HotelAddSchema(BaseModel):
@@ -8,8 +8,6 @@ class HotelAddSchema(BaseModel):
 
 class HotelSchema(HotelAddSchema):
     id: int
-
-    model_config = ConfigDict(from_attributes=True)
 
 
 class HotelPatchSchema(BaseModel):

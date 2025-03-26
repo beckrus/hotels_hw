@@ -4,6 +4,7 @@ from sqlalchemy import delete, insert, select, update
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import selectinload, joinedload
 
+from src.repositories.mappers.mappers import RoomsDataMapper, RoomsWithRelDataMapper
 from src.repositories.utils import rooms_ids_for_booking
 from src.repositories.exceptions import ItemNotFoundException
 from src.models.rooms import RoomsOrm
@@ -20,16 +21,15 @@ from src.repositories.base import BaseRepository
 
 class RoomsRepository(BaseRepository):
     model = RoomsOrm
-    scheme = RoomsSchema
+    mapper = RoomsDataMapper
 
     async def add(self, hotel_id: int, data: RoomsAddSchema) -> RoomsSchema:
-        print(data)
         data = data.model_dump()
         data["hotel_id"] = hotel_id
         room = RoomsDbSchema.model_validate(data)
         stmt = insert(self.model).values(**room.model_dump()).returning(self.model)
         result = await self.session.execute(stmt)
-        return self.scheme.model_validate(result.scalars().one())
+        return self.mapper.map_to_domain_entity(result.scalars().one())
 
     async def edit(
         self,
@@ -51,7 +51,7 @@ class RoomsRepository(BaseRepository):
                 .returning(self.model)
             )
             result = await self.session.execute(stmt)
-            return self.scheme.model_validate(result.scalars().one())
+            return self.mapper.map_to_domain_entity(result.scalars().one())
         except NoResultFound:
             raise ItemNotFoundException
 
@@ -71,12 +71,19 @@ class RoomsRepository(BaseRepository):
             .filter(self.model.id.in_(rooms_ids))
         )
         result = await self.session.execute(query)
-        return [RoomsWithRel.model_validate(model) for model in result.unique().scalars().all()]
+        return [
+            RoomsWithRelDataMapper.map_to_domain_entity(model)
+            for model in result.unique().scalars().all()
+        ]
 
-    async def get_one_by_id(self, hotel_id:int, id: int) -> RoomsWithRel:
+    async def get_one_by_id_with_rel(self, hotel_id: int, id: int) -> RoomsWithRel:
         try:
-            query = select(self.model).options(selectinload(self.model.facilities)).filter_by(hotel_id=hotel_id, id=id)
+            query = (
+                select(self.model)
+                .options(selectinload(self.model.facilities))
+                .filter_by(hotel_id=hotel_id, id=id)
+            )
             result = await self.session.execute(query)
-            return RoomsWithRel.model_validate(result.scalars().one())
+            return RoomsWithRelDataMapper.map_to_domain_entity(result.scalars().one())
         except NoResultFound:
             raise ItemNotFoundException

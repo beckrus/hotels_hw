@@ -16,12 +16,6 @@ async def get_hotels(
     date_from: date = Query(example="2025-03-24"),
     date_to: date = Query(example="2025-03-26"),
 ):
-    # return await db.hotels.get_all(
-    #     location=location,
-    #     title=title,
-    #     offset=(pagination.page - 1) * pagination.per_page,
-    #     limit=pagination.per_page,
-    # )
     return await db.hotels.get_filtered_by_time(
         location=location,
         title=title,

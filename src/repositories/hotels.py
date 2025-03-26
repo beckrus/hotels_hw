@@ -1,6 +1,7 @@
 from datetime import date
 from sqlalchemy import func, select
 
+from src.repositories.mappers.mappers import HotelDataMapper
 from src.models.rooms import RoomsOrm
 from src.repositories.utils import rooms_ids_for_booking
 from src.schemas.hotels import HotelSchema
@@ -10,7 +11,7 @@ from src.repositories.base import BaseRepository
 
 class HotelsRepository(BaseRepository):
     model = HotelsOrm
-    scheme = HotelSchema
+    mapper = HotelDataMapper
 
     async def get_all(
         self,
@@ -32,7 +33,7 @@ class HotelsRepository(BaseRepository):
         # print(query.compile(compile_kwargs={"literal_binds": True}))  # debug
         result = await self.session.execute(query)
         hotels = [
-            self.scheme.model_validate(hotel, from_attributes=True)
+            self.mapper.map_to_domain_entity(data=hotel)
             for hotel in result.scalars().all()
         ]
         return hotels
@@ -65,7 +66,7 @@ class HotelsRepository(BaseRepository):
         query = query.limit(limit).offset(offset)
         result = await self.session.execute(query)
         hotels = [
-            self.scheme.model_validate(hotel, from_attributes=True)
+            self.mapper.map_to_domain_entity(data=hotel)
             for hotel in result.scalars().all()
         ]
         return hotels
