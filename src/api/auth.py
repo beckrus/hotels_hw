@@ -20,7 +20,7 @@ async def create_user(data: UserRequestAddSchema, db: DBDep):
     data.is_varified = False
     if data.password != data.password_confirm:
         raise HTTPException(status_code=400, detail="Passwords do not match")
-    hashed_password = AuthService().hash_password(data.password.get_secret_value())
+    hashed_password = AuthService.hash_password(data.password.get_secret_value())
     user_data = UserHashedPwdAddSchema(
         **data.model_dump(), password_hash=hashed_password
     )
@@ -41,8 +41,8 @@ async def authenticate_user(
     data: Annotated[UserLoginSchema, Form()], response: Response, db: DBDep
 ):
     user = await db.users.get_one_with_hashed_password(username=data.username)
-    if user and AuthService().verify_password(data.password, user.password_hash):
-        access_token = AuthService().create_access_token({"user_id": user.id})
+    if user and AuthService.verify_password(data.password, user.password_hash):
+        access_token = AuthService.create_access_token({"user_id": user.id})
         response.set_cookie(key="access_token", value=access_token)
         return {"access_token": access_token}
     raise HTTPException(status_code=401, detail="Authentication failed")
@@ -55,7 +55,7 @@ async def logout_user(request: Request, response: Response, user_id: UserIdDep):
 
 
 @router.get("/me", summary="Get Current User")
-async def get_me(request: Request, user_id: UserIdDep, db: DBDep):
+async def get_me(user_id: UserIdDep, db: DBDep):
     try:
         user = await db.users.get_one_by_id(id=user_id)
         if user is None:

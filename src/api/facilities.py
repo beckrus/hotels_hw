@@ -1,7 +1,7 @@
-from fastapi import APIRouter, Body, HTTPException, Query
+from fastapi import APIRouter, Body, Depends, HTTPException, Query
 from schemas.facilities import FacilitiesAddSchema
 from src.repositories.exceptions import ItemNotFoundException
-from src.api.dependencies import DBDep, UserIdAdminDep
+from src.api.dependencies import DBDep, get_admin_user
 
 router = APIRouter(prefix="/facilities", tags=["Facilities"])
 
@@ -23,9 +23,8 @@ async def get_facility_by_id(facility_id: int, db: DBDep):
         raise HTTPException(status_code=404, detail="Item not found")
 
 
-@router.post("")
+@router.post("", dependencies=[Depends(get_admin_user)])
 async def create_facility(
-    auth_user_id: UserIdAdminDep,
     db: DBDep,
     data: FacilitiesAddSchema = Body(
         openapi_examples={
@@ -45,9 +44,9 @@ async def create_facility(
     return {"status": "OK", "data": facility}
 
 
-@router.patch("/{facility_id}")
+@router.patch("/{facility_id}", dependencies=[Depends(get_admin_user)])
 async def update_facility(
-    facility_id: int, data: FacilitiesAddSchema, auth_user_id: UserIdAdminDep, db: DBDep
+    facility_id: int, data: FacilitiesAddSchema, db: DBDep
 ):
     try:
         facility = await db.facilities.edit(facility_id, data, exclude_unset=True)
@@ -57,8 +56,8 @@ async def update_facility(
         raise HTTPException(status_code=404, detail="Item not found")
 
 
-@router.delete("/{facility_id}")
-async def delete_facility(facility_id: int, auth_user_id: UserIdAdminDep, db: DBDep):
+@router.delete("/{facility_id}", dependencies=[Depends(get_admin_user)])
+async def delete_facility(facility_id: int, db: DBDep):
     try:
         await db.facilities.delete(id=facility_id)
         await db.commit()

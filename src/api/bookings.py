@@ -1,15 +1,15 @@
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 
 from repositories.exceptions import ItemNotFoundException
 from src.schemas.bookings import BookingsAddSchema
-from src.api.dependencies import DBDep, UserIdDep, UserIdAdminDep
+from src.api.dependencies import DBDep, UserIdDep, get_admin_user
 
 
 router = APIRouter(prefix="/bookings", tags=["Bookings"])
 
 
-@router.get("/")
-async def get_all_bookings(request: Request, db: DBDep, user_id: UserIdAdminDep):
+@router.get("/", dependencies=[Depends(get_admin_user)])
+async def get_all_bookings(db: DBDep):
     bookings = await db.bookings.get_all()
     return {"status": "OK", "data": bookings}
 
@@ -22,7 +22,6 @@ async def get_users_bookings(request: Request, db: DBDep, user_id: UserIdDep):
 
 @router.get("/{booking_id}")
 async def get_booking(
-    request: Request,
     db: DBDep,
     booking_id: int,
     user_id: UserIdDep,
@@ -33,7 +32,6 @@ async def get_booking(
 
 @router.post("/")
 async def add_booking(
-    request: Request,
     db: DBDep,
     data: BookingsAddSchema,
     user_id: UserIdDep,
@@ -51,7 +49,6 @@ async def add_booking(
 
 @router.delete("/{booking_id}")
 async def delete_booking(
-    request: Request,
     db: DBDep,
     booking_id: int,
     user_id: UserIdDep,

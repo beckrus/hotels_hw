@@ -1,7 +1,7 @@
 from datetime import date
-from fastapi import APIRouter, Body, HTTPException, Query
+from fastapi import APIRouter, Body, Depends, HTTPException, Query
 from src.repositories.exceptions import ItemNotFoundException
-from src.api.dependencies import DBDep, PaginationDep, UserIdAdminDep
+from src.api.dependencies import DBDep, PaginationDep, get_admin_user
 from src.schemas.hotels import HotelAddSchema, HotelPatchSchema
 
 router = APIRouter(prefix="/hotels", tags=["Hotels"])
@@ -34,8 +34,8 @@ async def get_hotel_by_id(id: int, db: DBDep):
         raise HTTPException(status_code=404, detail="Item not found")
 
 
-@router.delete("/{hotel_id}")
-async def delete_hotel(hotel_id: int, auth_user_id: UserIdAdminDep, db: DBDep):
+@router.delete("/{hotel_id}", dependencies=[Depends(get_admin_user)])
+async def delete_hotel(hotel_id: int, db: DBDep):
     try:
         await db.hotels.delete(id=hotel_id)
         await db.commit()
@@ -44,9 +44,8 @@ async def delete_hotel(hotel_id: int, auth_user_id: UserIdAdminDep, db: DBDep):
         raise HTTPException(status_code=404, detail="Item not found")
 
 
-@router.post("")
+@router.post("", dependencies=[Depends(get_admin_user)])
 async def create_hotel(
-    auth_user_id: UserIdAdminDep,
     db: DBDep,
     hotel_data: HotelAddSchema = Body(
         openapi_examples={
@@ -67,9 +66,9 @@ async def create_hotel(
 
 
 # patch, put
-@router.patch("/{hotel_id}")
+@router.patch("/{hotel_id}", dependencies=[Depends(get_admin_user)])
 async def update_hotel(
-    hotel_id: int, hotel_data: HotelPatchSchema, auth_user_id: UserIdAdminDep, db: DBDep
+    hotel_id: int, hotel_data: HotelPatchSchema, db: DBDep
 ):
     try:
         hotel = await db.hotels.edit(hotel_id, hotel_data, exclude_unset=True)
@@ -79,9 +78,9 @@ async def update_hotel(
         raise HTTPException(status_code=404, detail="Item not found")
 
 
-@router.put("/{hotel_id}")
+@router.put("/{hotel_id}", dependencies=[Depends(get_admin_user)])
 async def rewrite_hotel(
-    auth_user_id: UserIdAdminDep, hotel_id: int, hotel_data: HotelAddSchema, db: DBDep
+    hotel_id: int, hotel_data: HotelAddSchema, db: DBDep
 ):
     try:
         hotel = await db.hotels.edit(hotel_id, hotel_data)

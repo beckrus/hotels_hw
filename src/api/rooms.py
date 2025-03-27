@@ -1,8 +1,8 @@
 from datetime import date
-from fastapi import APIRouter, Body, HTTPException, Query
+from fastapi import APIRouter, Body, Depends, HTTPException, Query
 
 from schemas.facilities import RoomsFacilitiesAddSchema
-from src.api.dependencies import DBDep, UserIdAdminDep
+from src.api.dependencies import DBDep, get_admin_user
 from src.repositories.exceptions import ItemNotFoundException
 from src.schemas.rooms import RoomsAddSchema, RoomsPatchSchema, RoomsPutSchema
 
@@ -31,10 +31,9 @@ async def get_hotel_room(hotel_id: int, room_id: int, db: DBDep):
         raise HTTPException(status_code=404, detail="Item not found")
 
 
-@router.post("/{hotel_id}/rooms")
+@router.post("/{hotel_id}/rooms", dependencies=[Depends(get_admin_user)])
 async def add_hotel_room(
     db: DBDep,
-    auth_user_id: UserIdAdminDep,
     hotel_id: int,
     data: RoomsAddSchema = Body(
         openapi_examples={
@@ -78,13 +77,12 @@ async def add_hotel_room(
     return {"status": "OK", "data": room}
 
 
-@router.patch("/{hotel_id}/rooms/{room_id}")
+@router.patch("/{hotel_id}/rooms/{room_id}", dependencies=[Depends(get_admin_user)])
 async def edit_hotel_room(
     hotel_id: int,
     room_id: int,
     data: RoomsPatchSchema,
-    db: DBDep,
-    auth_user_id: UserIdAdminDep,
+    db: DBDep
 ):
     """
     Edit specific details of a hotel room.
@@ -110,13 +108,12 @@ async def edit_hotel_room(
         raise HTTPException(status_code=404, detail="Item not found")
 
 
-@router.put("/{hotel_id}/rooms/{room_id}")
+@router.put("/{hotel_id}/rooms/{room_id}", dependencies=[Depends(get_admin_user)])
 async def replace_hotel_room(
     hotel_id: int,
     room_id: int,
     data: RoomsPutSchema,
     db: DBDep,
-    auth_user_id: UserIdAdminDep,
 ):
     """
     Replace all details of a hotel room.
@@ -149,9 +146,9 @@ async def replace_hotel_room(
         raise HTTPException(status_code=404, detail="Item not found")
 
 
-@router.delete("/{hotel_id}/rooms/{room_id}")
+@router.delete("/{hotel_id}/rooms/{room_id}", dependencies=[Depends(get_admin_user)])
 async def del_hotel_room(
-    auth_user_id: UserIdAdminDep, hotel_id: int, room_id: int, db: DBDep
+    hotel_id: int, room_id: int, db: DBDep
 ):
     try:
         await db.rooms.delete(
