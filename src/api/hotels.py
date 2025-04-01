@@ -1,5 +1,7 @@
 from datetime import date
 from fastapi import APIRouter, Body, Depends, HTTPException, Query
+from src.utils.cache_dec import cache_dec
+
 from src.repositories.exceptions import ItemNotFoundException
 from src.api.dependencies import DBDep, PaginationDep, get_admin_user
 from src.schemas.hotels import HotelAddSchema, HotelPatchSchema
@@ -8,6 +10,7 @@ router = APIRouter(prefix="/hotels", tags=["Hotels"])
 
 
 @router.get("")
+@cache_dec(exp=10)
 async def get_hotels(
     pagination: PaginationDep,
     db: DBDep,
@@ -27,6 +30,7 @@ async def get_hotels(
 
 
 @router.get("/{id}")
+@cache_dec(exp=10)
 async def get_hotel_by_id(id: int, db: DBDep):
     try:
         return await db.hotels.get_one_by_id(id=id)
@@ -67,9 +71,7 @@ async def create_hotel(
 
 # patch, put
 @router.patch("/{hotel_id}", dependencies=[Depends(get_admin_user)])
-async def update_hotel(
-    hotel_id: int, hotel_data: HotelPatchSchema, db: DBDep
-):
+async def update_hotel(hotel_id: int, hotel_data: HotelPatchSchema, db: DBDep):
     try:
         hotel = await db.hotels.edit(hotel_id, hotel_data, exclude_unset=True)
         await db.commit()
@@ -79,9 +81,7 @@ async def update_hotel(
 
 
 @router.put("/{hotel_id}", dependencies=[Depends(get_admin_user)])
-async def rewrite_hotel(
-    hotel_id: int, hotel_data: HotelAddSchema, db: DBDep
-):
+async def rewrite_hotel(hotel_id: int, hotel_data: HotelAddSchema, db: DBDep):
     try:
         hotel = await db.hotels.edit(hotel_id, hotel_data)
         await db.commit()

@@ -12,9 +12,7 @@ class BookingsRepository(BaseRepository):
     async def add(
         self, price: int, user_id: int, data: BookingsAddSchema
     ) -> BookingsSchema:
-        data = {**data.model_dump(), "user_id": user_id, "price": price}
-        booking = self.mapper.map_to_persistence_entity(data)
-        stmt = insert(self.model).values(**booking.model_dump()).returning(self.model)
+        booking = {**data.model_dump(), "user_id": user_id, "price": price}
+        stmt = insert(self.model).values(**booking).returning(self.model)
         result = await self.session.execute(stmt)
-
         return self.mapper.map_to_domain_entity(result.scalars().one())

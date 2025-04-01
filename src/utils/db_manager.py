@@ -29,3 +29,6 @@ class DBManager:
 
     async def commit(self):
         await self.session.commit()
+
+    def __repr__(self):
+        return "DBManager"

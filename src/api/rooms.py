@@ -5,11 +5,13 @@ from schemas.facilities import RoomsFacilitiesAddSchema
 from src.api.dependencies import DBDep, get_admin_user
 from src.repositories.exceptions import ItemNotFoundException
 from src.schemas.rooms import RoomsAddSchema, RoomsPatchSchema, RoomsPutSchema
+from src.utils.cache_dec import cache_dec
 
 router = APIRouter(prefix="/hotels", tags=["Rooms"])
 
 
 @router.get("/{hotel_id}/rooms")
+@cache_dec(exp=10)
 async def get_hotel_rooms(
     hotel_id: int,
     db: DBDep,
@@ -23,6 +25,7 @@ async def get_hotel_rooms(
 
 
 @router.get("/{hotel_id}/rooms/{room_id}")
+@cache_dec(exp=10)
 async def get_hotel_room(hotel_id: int, room_id: int, db: DBDep):
     try:
         room = await db.rooms.get_one_by_id_with_rel(hotel_id=hotel_id, id=room_id)
@@ -72,17 +75,15 @@ async def add_hotel_room(
         RoomsFacilitiesAddSchema.model_validate({"room_id": room.id, "facility_id": n})
         for n in data.facilities
     ]
-    await db.rooms_facilities.add_bulk(facilities_data)
+    if facilities_data:
+        await db.rooms_facilities.add_bulk(facilities_data)
     await db.commit()
     return {"status": "OK", "data": room}
 
 
 @router.patch("/{hotel_id}/rooms/{room_id}", dependencies=[Depends(get_admin_user)])
 async def edit_hotel_room(
-    hotel_id: int,
-    room_id: int,
-    data: RoomsPatchSchema,
-    db: DBDep
+    hotel_id: int, room_id: int, data: RoomsPatchSchema, db: DBDep
 ):
     """
     Edit specific details of a hotel room.
@@ -147,9 +148,7 @@ async def replace_hotel_room(
 
 
 @router.delete("/{hotel_id}/rooms/{room_id}", dependencies=[Depends(get_admin_user)])
-async def del_hotel_room(
-    hotel_id: int, room_id: int, db: DBDep
-):
+async def del_hotel_room(hotel_id: int, room_id: int, db: DBDep):
     try:
         await db.rooms.delete(
             hotel_id=hotel_id,

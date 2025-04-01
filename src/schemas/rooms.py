@@ -8,7 +8,7 @@ class RoomsAddSchema(BaseModel):
     description: str | None
     price: int
     quantity: int
-    facilities: list[int] | None = None
+    facilities: list[int] = []
 
 
 class RoomsAddDBSchema(BaseModel):

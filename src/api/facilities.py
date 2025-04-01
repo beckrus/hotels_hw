@@ -1,17 +1,22 @@
 from fastapi import APIRouter, Body, Depends, HTTPException, Query
+from fastapi_cache.decorator import cache
+
 from schemas.facilities import FacilitiesAddSchema
 from src.repositories.exceptions import ItemNotFoundException
 from src.api.dependencies import DBDep, get_admin_user
+
 
 router = APIRouter(prefix="/facilities", tags=["Facilities"])
 
 
 @router.get("")
+@cache(expire=10)
 async def get_facilities(
     db: DBDep,
     name: str | None = Query(description="Name", default=None),
 ):
     filter = {"name": name} if name else {}
+
     return await db.facilities.get_filtered(**filter)
 
 
@@ -45,9 +50,7 @@ async def create_facility(
 
 
 @router.patch("/{facility_id}", dependencies=[Depends(get_admin_user)])
-async def update_facility(
-    facility_id: int, data: FacilitiesAddSchema, db: DBDep
-):
+async def update_facility(facility_id: int, data: FacilitiesAddSchema, db: DBDep):
     try:
         facility = await db.facilities.edit(facility_id, data, exclude_unset=True)
         await db.commit()

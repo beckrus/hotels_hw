@@ -19,7 +19,9 @@ async def get_users():  # Only admins
     return {"status": "OK", "data": users}
 
 
-@router.get("/{user_id}", dependencies=[Depends(get_admin_user)])  # admin or the user itself
+@router.get(
+    "/{user_id}", dependencies=[Depends(get_admin_user)]
+)  # admin or the user itself
 async def get_user_by_id(user_id: int):
     try:
         async with async_session_maker() as session:

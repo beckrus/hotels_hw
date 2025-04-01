@@ -15,5 +15,5 @@ class DataMapper:
         return cls.schema.model_validate(data, from_attributes=True)
 
     @classmethod
-    def map_to_persistence_entity(cls, data: BaseModel) -> Base:
-        return cls.db_model(**data.model_dump())
+    def map_to_persistence_entity(cls, data: BaseModel | dict) -> Base:
+        return cls.db_model(**data.model_dump() if not isinstance(data, dict) else data)

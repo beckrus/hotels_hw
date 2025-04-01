@@ -15,5 +15,5 @@ class RoomsOrm(Base):
     image_id: Mapped[str | None]
 
     facilities: Mapped[list["FacilitiesOrm"]] = relationship(  # noqa F821
-        back_populates="rooms", secondary="rooms_facilities"
+        back_populates="rooms", secondary="rooms_facilities", lazy="selectin"
     )
