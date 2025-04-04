@@ -5,7 +5,6 @@ from schemas.facilities import RoomsFacilitiesAddSchema
 from src.api.dependencies import DBDep, get_admin_user
 from src.repositories.exceptions import ItemNotFoundException
 from src.schemas.rooms import RoomsAddSchema, RoomsPatchSchema, RoomsPutSchema
-from src.utils.cache_dec import cache_dec
 
 router = APIRouter(prefix="/hotels", tags=["Rooms"])
 

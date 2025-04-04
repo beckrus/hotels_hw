@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Body, Depends, HTTPException, Query
-from fastapi_cache.decorator import cache
+# from fastapi_cache.decorator import cache
 
 from schemas.facilities import FacilitiesAddSchema
 from src.repositories.exceptions import ItemNotFoundException
@@ -10,7 +10,7 @@ router = APIRouter(prefix="/facilities", tags=["Facilities"])
 
 
 @router.get("")
-@cache(expire=10)
+# @cache(expire=10)
 async def get_facilities(
     db: DBDep,
     name: str | None = Query(description="Name", default=None),

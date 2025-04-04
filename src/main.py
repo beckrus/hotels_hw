@@ -1,4 +1,3 @@
-import asyncio
 from contextlib import asynccontextmanager
 import sys
 from pathlib import Path
@@ -11,7 +10,6 @@ from fastapi_cache.backends.redis import RedisBackend
 
 sys.path.append(str(Path(__file__).parent.parent))
 
-from api.dependencies import get_db
 from src.api.hotels import router as hotels_router
 from src.api.auth import router as auth_router
 from src.api.users import router as users_router
