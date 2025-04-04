@@ -9,6 +9,7 @@ class BookingsAddSchema(BaseModel):
 
 
 class BookingsDbAddSchema(BookingsAddSchema):
+    id: int | None = None
     user_id: int
     price: int
 

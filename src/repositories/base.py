@@ -33,6 +33,7 @@ class BaseRepository(Generic[T]):
         model = result.scalars().one_or_none()
         if model is None:
             return None
+        print(model)
         return self.mapper.map_to_domain_entity(model)
 
     async def get_one_by_id(self, id: int) -> BaseModel:

@@ -61,15 +61,15 @@ UserIdDep = Annotated[int, Depends(get_current_user)]
 UserIdAdminDep = Annotated[int, Depends(get_admin_user)]
 
 
-def get_db_manager():
+def get_db_manager() -> DBManager:
     return DBManager(session_factory=async_session_maker)
 
 
-def get_db_manager_null_pull():
+def get_db_manager_null_pull() -> DBManager:
     return DBManager(session_factory=async_session_maker_null_pool)
 
 
-async def get_db():
+async def get_db() -> DBManager:
     async with get_db_manager() as db:
         yield db
 
