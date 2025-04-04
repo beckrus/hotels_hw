@@ -9,13 +9,23 @@ dependencies = [
     "asyncpg>=0.30.0",
     "bcrypt==4.0.1",
     "black>=25.1.0",
+    "celery>=5.5.0",
     "fastapi-cache2>=0.2.2",
     "fastapi[standard]>=0.115.11",
     "passlib[bcrypt]>=1.7.4",
+    "pillow>=11.1.0",
     "pydantic-settings>=2.8.1",
     "pyjwt>=2.10.1",
+    "pytest>=8.3.5",
+    "pytest-asyncio>=0.26.0",
+    "pytest-dotenv>=0.5.2",
     "redis>=5.2.1",
     "ruff>=0.11.2",
     "sqlalchemy>=2.0.39",
     "uvicorn>=0.20.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.5",
 ]

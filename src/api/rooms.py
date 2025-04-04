@@ -11,7 +11,6 @@ router = APIRouter(prefix="/hotels", tags=["Rooms"])
 
 
 @router.get("/{hotel_id}/rooms")
-@cache_dec(exp=10)
 async def get_hotel_rooms(
     hotel_id: int,
     db: DBDep,
@@ -25,7 +24,6 @@ async def get_hotel_rooms(
 
 
 @router.get("/{hotel_id}/rooms/{room_id}")
-@cache_dec(exp=10)
 async def get_hotel_room(hotel_id: int, room_id: int, db: DBDep):
     try:
         room = await db.rooms.get_one_by_id_with_rel(hotel_id=hotel_id, id=room_id)

@@ -6,7 +6,7 @@ from fastapi import HTTPException, Query, Depends, Request
 
 from src.repositories.users import UsersRepository
 from src.services.auth import AuthService
-from src.database import async_session_maker
+from src.database import async_session_maker, async_session_maker_null_pool
 from src.utils.db_manager import DBManager
 
 
@@ -63,6 +63,10 @@ UserIdAdminDep = Annotated[int, Depends(get_admin_user)]
 
 def get_db_manager():
     return DBManager(session_factory=async_session_maker)
+
+
+def get_db_manager_null_pull():
+    return DBManager(session_factory=async_session_maker_null_pool)
 
 
 async def get_db():

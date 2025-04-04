@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from sqlalchemy import delete, select, update
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.dialects.postgresql import insert
-
+from sqlalchemy.ext.asyncio import AsyncSession
 from src.repositories.mappers.base import DataMapper
 from src.repositories.exceptions import ItemNotFoundException
 
@@ -14,7 +14,7 @@ class BaseRepository(Generic[T]):
     model: Type[T]
     mapper: DataMapper
 
-    def __init__(self, session):
+    def __init__(self, session: AsyncSession):
         self.session = session
 
     async def get_filtered(self, *filter, **filter_by) -> list[BaseModel]:

@@ -23,6 +23,7 @@ def cache_dec(exp: int = 10):
                 redis_data = [n.model_dump() for n in res]
                 redis_data = json.dumps(redis_data)
             else:
+                print(res)
                 redis_data = json.dumps(res)
             await redis_manager.set(f"fastapi_{f_name}_{k_name}", redis_data, exp)
 
