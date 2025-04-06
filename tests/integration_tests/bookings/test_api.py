@@ -1,7 +1,6 @@
 import pytest
 from datetime import date, timedelta
-from utils.db_manager import DBManager
-
+from tests.conftest import get_db_null_pool
 
 async def test_get_bookings(authenticated_ac):
     res = await authenticated_ac.get("/bookings/")
@@ -39,11 +38,11 @@ date_to = (date.today() + timedelta(days=10)).strftime("%Y-%m-%d")
     ],
 )
 async def test_post_bookings_w_auth(
-    authenticated_ac,
     room_id: int,
     date_from: str,
     date_to: str,
     status_code: int,
+    authenticated_ac
 ):
     res_add = await authenticated_ac.post(
         "/bookings/",
@@ -63,31 +62,32 @@ async def test_post_bookings_w_auth(
         assert res_data["data"]["date_to"] == date_to
 
 
-@pytest.fixture()
-async def del_all_bookings(db:DBManager):
-    all_bookings = await db.bookings.get_all()
-    await db.bookings.delete_bulk([n.id for n in all_bookings])
-    await db.commit()
-    assert len(await db.bookings.get_all()) == 0
-
+@pytest.fixture(scope='module')
+async def del_all_bookings():
+    async for _db in get_db_null_pool():
+        all_bookings = await _db.bookings.get_all()
+        await _db.bookings.delete_bulk([n.id for n in all_bookings])
+        await _db.commit()
+        assert len(await _db.bookings.get_all()) == 0
 
 
 @pytest.mark.parametrize(
         "room_id, date_from, date_to, status_code, count",
         [
             (1, date_from, date_to, 200, 1),
-            (1, date_from, date_to, 200, 1),
-            (1, date_from, date_to, 200, 1), 
+            (1, date_from, date_to, 200, 2),
+            (1, date_from, date_to, 200, 3), 
         ]
 )
 async def test_add_and_get_my_bookings(
-    del_all_bookings,
-    authenticated_ac,
     room_id: int,
     date_from: str,
     date_to: str,
     status_code: int,
-    count:int):
+    count:int,
+    del_all_bookings,
+    authenticated_ac,
+    ):
     res_add = await authenticated_ac.post(
         "/bookings/",
         json={
