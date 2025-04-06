@@ -87,5 +87,5 @@ class BaseRepository(Generic[T]):
         stmt = delete(self.model).filter(self.model.id.in_(ids))
         result = await self.session.execute(stmt)
 
-        if result.rowcount < 1:
+        if result.rowcount < len(ids):
             raise ItemNotFoundException

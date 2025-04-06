@@ -5,13 +5,15 @@ from utils.db_manager import DBManager
 
 async def test_booking_crud(db: DBManager):
     user = (await db.users.get_all())[0].id
-    room = (await db.rooms.get_all())[0].id
+    room = (await db.rooms.get_all())[1].id
     hotel_data = BookingsAddSchema(
         room_id=room,
         date_from=date.today(),
         date_to=date.today() + timedelta(days=10),
     )
-    booking_added = await db.bookings.add(user_id=user, price=1000, data=hotel_data)
+    booking_added = await db.bookings.add_booking(
+        user_id=user, price=1000, data=hotel_data
+    )
     assert booking_added
 
     booking_get = await db.bookings.get_one_or_none(id=booking_added.id)
