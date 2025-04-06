@@ -42,7 +42,9 @@ async def add_booking(
         raise HTTPException(status_code=404, detail="Room not found")
     try:
         room_price = room.price * (data.date_to - data.date_from).days
-        booking = await db.bookings.add_booking(user_id=user_id,price=room_price, data=data)
+        booking = await db.bookings.add_booking(
+            user_id=user_id, price=room_price, data=data
+        )
         await db.commit()
         return {"status": "OK", "data": booking}
     except NoRoomAvailableException:

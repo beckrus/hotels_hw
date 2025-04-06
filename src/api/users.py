@@ -37,9 +37,7 @@ async def update_user(
             raise HTTPException(status_code=404, detail="Item not found")
         if data.password:
             if data.password != data.password_confirm:
-                raise HTTPException(
-                    status_code=400, detail="Passwords do not match"
-                )
+                raise HTTPException(status_code=400, detail="Passwords do not match")
             data.password = AuthService().hash_password(
                 data.password.get_secret_value()
             )

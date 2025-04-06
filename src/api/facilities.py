@@ -51,6 +51,7 @@ async def create_facility(
     except DuplicateItemException:
         raise HTTPException(status_code=400, detail="Item already exists")
 
+
 @router.patch("/{facility_id}", dependencies=[Depends(get_admin_user)])
 async def update_facility(facility_id: int, data: FacilitiesAddSchema, db: DBDep):
     try:

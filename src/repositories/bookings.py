@@ -5,7 +5,7 @@ from src.repositories.exceptions import NoRoomAvailableException
 from src.repositories.utils import rooms_ids_for_booking
 from src.repositories.mappers.mappers import BookingsDataMapper
 from src.models.bookings import BookingsOrm
-from src.schemas.bookings import BookingsAddSchema, BookingsSchema
+from src.schemas.bookings import BookingsAddSchema
 from src.repositories.base import BaseRepository
 
 
@@ -26,7 +26,7 @@ class BookingsRepository(BaseRepository):
         result = await self.session.execute(query)
         return [self.mapper.map_to_domain_entity(n) for n in result.scalars().all()]
 
-    async def add_booking(self, price: int, user_id:int, data: BookingsAddSchema):
+    async def add_booking(self, price: int, user_id: int, data: BookingsAddSchema):
         query = rooms_ids_for_booking(date_from=data.date_from, date_to=data.date_to)
         result = await self.session.execute(query)
         avail_rooms = result.scalars().all()

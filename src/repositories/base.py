@@ -51,7 +51,7 @@ class BaseRepository(Generic[T]):
             result = await self.session.execute(stmt)
             return self.mapper.map_to_domain_entity(result.scalars().one())
         except IntegrityError as e:
-            if e.orig.sqlstate == '23505':
+            if e.orig.sqlstate == "23505":
                 raise DuplicateItemException
 
     async def add_bulk(self, data: list[BaseModel]) -> BaseModel:

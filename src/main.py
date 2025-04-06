@@ -6,7 +6,6 @@ from fastapi import FastAPI
 import uvicorn
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
-from fastapi_cache.backends.inmemory import InMemoryBackend
 
 sys.path.append(str(Path(__file__).parent.parent))
 
@@ -18,7 +17,7 @@ from src.api.bookings import router as bookings_router
 from src.api.facilities import router as facility_router
 from src.api.images import router as image_router
 from src.init import redis_manager
-from src.config import settings
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -28,6 +27,7 @@ async def lifespan(app: FastAPI):
     yield
     print("Closing app...")
     await redis_manager.close()
+
 
 # if settings.MODE == 'TEST':
 #     FastAPICache.init(InMemoryBackend(), prefix="fastapi-cache")
