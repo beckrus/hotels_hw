@@ -12,6 +12,7 @@ dependencies = [
     "celery>=5.5.0",
     "fastapi-cache2>=0.2.2",
     "fastapi[standard]>=0.115.11",
+    "mypy>=1.15.0",
     "passlib[bcrypt]>=1.7.4",
     "pillow>=11.1.0",
     "pydantic-settings>=2.8.1",

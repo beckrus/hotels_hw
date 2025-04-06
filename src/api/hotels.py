@@ -1,6 +1,6 @@
 from datetime import date
 from fastapi import APIRouter, Body, Depends, HTTPException, Query
-# from fastapi_cache.decorator import cache
+from fastapi_cache.decorator import cache
 
 from src.repositories.exceptions import ItemNotFoundException
 from src.api.dependencies import DBDep, PaginationDep, get_admin_user
@@ -10,7 +10,7 @@ router = APIRouter(prefix="/hotels", tags=["Hotels"])
 
 
 @router.get("")
-# @cache(expire=10)
+@cache(expire=10)
 async def get_hotels(
     pagination: PaginationDep,
     db: DBDep,
@@ -30,7 +30,7 @@ async def get_hotels(
 
 
 @router.get("/{id}")
-# @cache(expire=10)
+@cache(expire=10)
 async def get_hotel_by_id(id: int, db: DBDep):
     try:
         return await db.hotels.get_one_by_id(id=id)

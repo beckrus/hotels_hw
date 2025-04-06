@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Body, Depends, HTTPException, Query
-# from fastapi_cache.decorator import cache
+from fastapi_cache.decorator import cache
 
 from schemas.facilities import FacilitiesAddSchema
-from src.repositories.exceptions import ItemNotFoundException
+from src.repositories.exceptions import DuplicateItemException, ItemNotFoundException
 from src.api.dependencies import DBDep, get_admin_user
 
 
@@ -10,7 +10,7 @@ router = APIRouter(prefix="/facilities", tags=["Facilities"])
 
 
 @router.get("")
-# @cache(expire=10)
+@cache(expire=10)
 async def get_facilities(
     db: DBDep,
     name: str | None = Query(description="Name", default=None),
@@ -44,10 +44,12 @@ async def create_facility(
         }
     ),
 ):
-    facility = await db.facilities.add(data)
-    await db.commit()
-    return {"status": "OK", "data": facility}
-
+    try:
+        facility = await db.facilities.add(data)
+        await db.commit()
+        return {"status": "OK", "data": facility}
+    except DuplicateItemException:
+        raise HTTPException(status_code=400, detail="Item already exists")
 
 @router.patch("/{facility_id}", dependencies=[Depends(get_admin_user)])
 async def update_facility(facility_id: int, data: FacilitiesAddSchema, db: DBDep):

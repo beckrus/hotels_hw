@@ -5,7 +5,8 @@ from sqlalchemy.exc import NoResultFound
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.repositories.mappers.base import DataMapper
-from src.repositories.exceptions import ItemNotFoundException
+from src.repositories.exceptions import DuplicateItemException, ItemNotFoundException
+from sqlalchemy.exc import IntegrityError
 
 T = TypeVar("T")
 
@@ -45,9 +46,13 @@ class BaseRepository(Generic[T]):
             raise ItemNotFoundException
 
     async def add(self, data: BaseModel) -> None:
-        stmt = insert(self.model).values(**data.model_dump()).returning(self.model)
-        result = await self.session.execute(stmt)
-        return self.mapper.map_to_domain_entity(result.scalars().one())
+        try:
+            stmt = insert(self.model).values(**data.model_dump()).returning(self.model)
+            result = await self.session.execute(stmt)
+            return self.mapper.map_to_domain_entity(result.scalars().one())
+        except IntegrityError as e:
+            if e.orig.sqlstate == '23505':
+                raise DuplicateItemException
 
     async def add_bulk(self, data: list[BaseModel]) -> BaseModel:
         stmt = (
