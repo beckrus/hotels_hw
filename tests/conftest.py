@@ -80,8 +80,8 @@ async def set_user_as_admin(create_user):
         await db.users.edit(id=user.id, data=data, exclude_unset=True)
         await db.commit()
 
-@pytest.fixture()
-async def authenticated_ac():
+@pytest.fixture(scope="session")
+async def authenticated_ac(set_user_as_admin):
     async with AsyncClient(transport=ASGITransport(app), base_url="http://test") as ac:
         await ac.post("/auth/login", data={
             "grant_type":"string",

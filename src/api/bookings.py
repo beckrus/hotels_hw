@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
 
-from repositories.exceptions import ItemNotFoundException
+from src.repositories.exceptions import ItemNotFoundException, NoRoomAvailableException
 from src.schemas.bookings import BookingsAddSchema
 from src.api.dependencies import DBDep, UserIdDep, get_admin_user
 
@@ -38,13 +38,15 @@ async def add_booking(
 ):
     try:
         room = await db.rooms.get_one_by_id(id=data.room_id)
-        # add filter for avaialbility
     except ItemNotFoundException:
         raise HTTPException(status_code=404, detail="Room not found")
-    room_price = room.price * (data.date_to - data.date_from).days
-    booking = await db.bookings.add(user_id=user_id, price=room_price, data=data)
-    await db.commit()
-    return {"status": "OK", "data": booking}
+    try:
+        room_price = room.price * (data.date_to - data.date_from).days
+        booking = await db.bookings.add_booking(user_id=user_id,price=room_price, data=data)
+        await db.commit()
+        return {"status": "OK", "data": booking}
+    except NoRoomAvailableException:
+        raise HTTPException(status_code=400, detail="No room available")
 
 
 @router.delete("/{booking_id}")

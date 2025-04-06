@@ -8,3 +8,7 @@ class TooManyItemFoundException(Exception):
 
 class DuplicateItemException(Exception):
     pass
+
+
+class NoRoomAvailableException(Exception):
+    pass
