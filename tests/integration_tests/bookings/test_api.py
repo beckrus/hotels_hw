@@ -2,6 +2,7 @@ import pytest
 from datetime import date, timedelta
 from tests.conftest import get_db_null_pool
 
+
 async def test_get_bookings(authenticated_ac):
     res = await authenticated_ac.get("/bookings/")
     assert res.status_code == 200
@@ -38,11 +39,7 @@ date_to = (date.today() + timedelta(days=10)).strftime("%Y-%m-%d")
     ],
 )
 async def test_post_bookings_w_auth(
-    room_id: int,
-    date_from: str,
-    date_to: str,
-    status_code: int,
-    authenticated_ac
+    room_id: int, date_from: str, date_to: str, status_code: int, authenticated_ac
 ):
     res_add = await authenticated_ac.post(
         "/bookings/",
@@ -62,7 +59,7 @@ async def test_post_bookings_w_auth(
         assert res_data["data"]["date_to"] == date_to
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 async def del_all_bookings():
     async for _db in get_db_null_pool():
         all_bookings = await _db.bookings.get_all()
@@ -72,22 +69,22 @@ async def del_all_bookings():
 
 
 @pytest.mark.parametrize(
-        "room_id, date_from, date_to, status_code, count",
-        [
-            (1, date_from, date_to, 200, 1),
-            (1, date_from, date_to, 200, 2),
-            (1, date_from, date_to, 200, 3), 
-        ]
+    "room_id, date_from, date_to, status_code, count",
+    [
+        (1, date_from, date_to, 200, 1),
+        (1, date_from, date_to, 200, 2),
+        (1, date_from, date_to, 200, 3),
+    ],
 )
 async def test_add_and_get_my_bookings(
     room_id: int,
     date_from: str,
     date_to: str,
     status_code: int,
-    count:int,
+    count: int,
     del_all_bookings,
     authenticated_ac,
-    ):
+):
     res_add = await authenticated_ac.post(
         "/bookings/",
         json={
@@ -100,5 +97,5 @@ async def test_add_and_get_my_bookings(
     my_bookings = await authenticated_ac.get("/bookings/me")
     my_bookings.status_code == status_code
     data = my_bookings.json()
-    assert 'data' in data
-    assert len(data['data']) == count
+    assert "data" in data
+    assert len(data["data"]) == count

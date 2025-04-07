@@ -26,7 +26,7 @@ class UsersRepository(BaseRepository):
             else:
                 raise e
 
-    async def get_one_with_hashed_password(self, username) -> BaseModel:
+    async def get_one_with_hashed_password(self, username) -> UserHashedSchema:
         query = select(self.model).filter_by(username=username)
         result = await self.session.execute(query)
         model = result.scalars().one_or_none()

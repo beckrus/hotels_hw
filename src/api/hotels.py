@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from fastapi import APIRouter, Body, Depends, HTTPException, Query
 from fastapi_cache.decorator import cache
 
@@ -19,6 +19,8 @@ async def get_hotels(
     date_from: date = Query(example="2025-03-24"),
     date_to: date = Query(example="2025-03-26"),
 ):
+    if date_from > date_to:
+        raise HTTPException(status_code=422, detail="date from > date to")
     return await db.hotels.get_filtered_by_time(
         location=location,
         title=title,
@@ -35,7 +37,7 @@ async def get_hotel_by_id(id: int, db: DBDep):
     try:
         return await db.hotels.get_one_by_id(id=id)
     except ItemNotFoundException:
-        raise HTTPException(status_code=404, detail="Item not found")
+        raise HTTPException(status_code=404, detail="Hotel not found")
 
 
 @router.delete("/{hotel_id}", dependencies=[Depends(get_admin_user)])
@@ -45,7 +47,7 @@ async def delete_hotel(hotel_id: int, db: DBDep):
         await db.commit()
         return {"status": "OK"}
     except ItemNotFoundException:
-        raise HTTPException(status_code=404, detail="Item not found")
+        raise HTTPException(status_code=404, detail="Hotel not found")
 
 
 @router.post("", dependencies=[Depends(get_admin_user)])
@@ -77,7 +79,7 @@ async def update_hotel(hotel_id: int, hotel_data: HotelPatchSchema, db: DBDep):
         await db.commit()
         return {"status": "OK", "data": hotel}
     except ItemNotFoundException:
-        raise HTTPException(status_code=404, detail="Item not found")
+        raise HTTPException(status_code=404, detail="Hotel not found")
 
 
 @router.put("/{hotel_id}", dependencies=[Depends(get_admin_user)])
@@ -87,4 +89,4 @@ async def rewrite_hotel(hotel_id: int, hotel_data: HotelAddSchema, db: DBDep):
         await db.commit()
         return {"status": "OK", "data": hotel}
     except ItemNotFoundException:
-        raise HTTPException(status_code=404, detail="Item not found")
+        raise HTTPException(status_code=404, detail="Hotel not found")

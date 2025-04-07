@@ -16,7 +16,9 @@ class BookingsDbAddSchema(BookingsAddSchema):
     model_config = ConfigDict(from_attributes=True)
 
 
-class BookingsSchema(BookingsDbAddSchema):
+class BookingsSchema(BookingsAddSchema):
     id: int
+    user_id: int
+    price: int
 
     model_config = ConfigDict(from_attributes=True)

@@ -3,7 +3,7 @@ from fastapi import APIRouter, Body, Depends, HTTPException, Query
 
 from schemas.facilities import RoomsFacilitiesAddSchema
 from src.api.dependencies import DBDep, get_admin_user
-from src.repositories.exceptions import ItemNotFoundException
+from src.repositories.exceptions import FKNotFoundException, ItemNotFoundException
 from src.schemas.rooms import RoomsAddSchema, RoomsPatchSchema, RoomsPutSchema
 
 router = APIRouter(prefix="/hotels", tags=["Rooms"])
@@ -16,6 +16,9 @@ async def get_hotel_rooms(
     date_from: date = Query(example="2025-03-24"),
     date_to: date = Query(example="2025-03-26"),
 ):
+    if date_from > date_to:
+        raise HTTPException(status_code=422, detail="date from > date to")
+    
     rooms = await db.rooms.get_filtered_by_time(
         hotel_id=hotel_id, date_from=date_from, date_to=date_to
     )
@@ -28,7 +31,7 @@ async def get_hotel_room(hotel_id: int, room_id: int, db: DBDep):
         room = await db.rooms.get_one_by_id_with_rel(hotel_id=hotel_id, id=room_id)
         return {"status": "OK", "data": room}
     except ItemNotFoundException:
-        raise HTTPException(status_code=404, detail="Item not found")
+        raise HTTPException(status_code=404, detail="Room not found")
 
 
 @router.post("/{hotel_id}/rooms", dependencies=[Depends(get_admin_user)])
@@ -67,7 +70,11 @@ async def add_hotel_room(
         }
     ),
 ):
-    room = await db.rooms.add(hotel_id=hotel_id, data=data)
+    try:
+        room = await db.rooms.add(hotel_id=hotel_id, data=data)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Hotel not found")
+    
     facilities_data = [
         RoomsFacilitiesAddSchema.model_validate({"room_id": room.id, "facility_id": n})
         for n in data.facilities
@@ -103,7 +110,7 @@ async def edit_hotel_room(
         await db.commit()
         return {"status": "OK", "data": room}
     except ItemNotFoundException:
-        raise HTTPException(status_code=404, detail="Item not found")
+        raise HTTPException(status_code=404, detail="Room not found")
 
 
 @router.put("/{hotel_id}/rooms/{room_id}", dependencies=[Depends(get_admin_user)])
@@ -141,7 +148,7 @@ async def replace_hotel_room(
         await db.commit()
         return {"status": "OK", "data": room}
     except ItemNotFoundException:
-        raise HTTPException(status_code=404, detail="Item not found")
+        raise HTTPException(status_code=404, detail="Room not found")
 
 
 @router.delete("/{hotel_id}/rooms/{room_id}", dependencies=[Depends(get_admin_user)])
@@ -154,4 +161,4 @@ async def del_hotel_room(hotel_id: int, room_id: int, db: DBDep):
         await db.commit()
         return {"status": "OK"}
     except ItemNotFoundException:
-        raise HTTPException(status_code=404, detail="Item not found")
+        raise HTTPException(status_code=404, detail="Room not found")

@@ -39,7 +39,7 @@ async def add_booking(
     try:
         room = await db.rooms.get_one_by_id(id=data.room_id)
     except ItemNotFoundException:
-        raise HTTPException(status_code=404, detail="Room not found")
+        raise HTTPException(status_code=400, detail="Room not found")
     try:
         room_price = room.price * (data.date_to - data.date_from).days
         booking = await db.bookings.add_booking(
@@ -48,7 +48,7 @@ async def add_booking(
         await db.commit()
         return {"status": "OK", "data": booking}
     except NoRoomAvailableException:
-        raise HTTPException(status_code=400, detail="No room available")
+        raise HTTPException(status_code=409, detail="No free room available")
 
 
 @router.delete("/{booking_id}")

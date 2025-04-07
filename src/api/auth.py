@@ -31,7 +31,7 @@ async def create_user(data: UserRequestAddSchema, db: DBDep):
         return user
     except DuplicateItemException:
         raise HTTPException(
-            status_code=400,
+            status_code=409,
             detail="User with these username, email or phone already exists",
         )
 
@@ -58,10 +58,6 @@ async def logout_user(request: Request, response: Response, user_id: UserIdDep):
 async def get_me(user_id: UserIdDep, db: DBDep):
     try:
         user = await db.users.get_one_by_id(id=user_id)
-        if user is None:
-            raise HTTPException(
-                status_code=401, detail="Could not validate credentials"
-            )
         return user
     except ItemNotFoundException:
         raise HTTPException(status_code=401, detail="Could not validate credentials")

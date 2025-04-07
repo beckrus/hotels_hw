@@ -1,6 +1,6 @@
 from typing import Type, TypeVar, Generic
 from pydantic import BaseModel
-from sqlalchemy import delete, select, update
+from sqlalchemy import Sequence, delete, select, update
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession

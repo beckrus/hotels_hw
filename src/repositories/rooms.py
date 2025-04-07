@@ -1,12 +1,11 @@
 from datetime import date
-from pydantic import BaseModel
 from sqlalchemy import delete, insert, select, update
-from sqlalchemy.exc import NoResultFound
+from sqlalchemy.exc import NoResultFound, IntegrityError
 from sqlalchemy.orm import selectinload, joinedload
 
 from src.repositories.mappers.mappers import RoomsDataMapper, RoomsWithRelDataMapper
 from src.repositories.utils import rooms_ids_for_booking
-from src.repositories.exceptions import ItemNotFoundException
+from src.repositories.exceptions import ItemNotFoundException, FKNotFoundException
 from src.models.rooms import RoomsOrm
 from src.schemas.rooms import (
     RoomsDbSchema,
@@ -28,8 +27,14 @@ class RoomsRepository(BaseRepository):
         data["hotel_id"] = hotel_id
         room = RoomsDbSchema.model_validate(data)
         stmt = insert(self.model).values(**room.model_dump()).returning(self.model)
-        result = await self.session.execute(stmt)
-        return self.mapper.map_to_domain_entity(result.scalars().one())
+        try:
+            result = await self.session.execute(stmt)
+            return self.mapper.map_to_domain_entity(result.scalars().one())
+        except IntegrityError as e:
+            if e.orig.sqlstate == 23503:
+                raise FKNotFoundException
+            else:
+                raise e
 
     async def edit(
         self,
@@ -37,7 +42,7 @@ class RoomsRepository(BaseRepository):
         room_id: int,
         data: RoomsPatchSchema,
         exclude_unset: bool = False,
-    ) -> BaseModel:
+    ) -> RoomsSchema:
         room = RoomsPatchDbSchema.model_validate(
             data.model_dump(exclude_unset=exclude_unset)
         )
