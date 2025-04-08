@@ -1,3 +1,4 @@
+import logging
 from typing import Type, TypeVar, Generic
 from pydantic import BaseModel
 from sqlalchemy import Sequence, delete, select, update
@@ -51,8 +52,14 @@ class BaseRepository(Generic[T]):
             result = await self.session.execute(stmt)
             return self.mapper.map_to_domain_entity(result.scalars().one())
         except IntegrityError as e:
+            logging.error(
+                f"Can't add data in DB, error type: {type(e.orig.__cause__)=}, input data: {data}"
+            )
             if e.orig.sqlstate == "23505":
                 raise DuplicateItemException
+            else:
+                logging.critical(f"Unknown error occurred, error type: {type(e.orig.__cause__)=}, input data: {data}, source: BaseRepository.add")
+                raise e
 
     async def add_bulk(self, data: list[BaseModel]) -> BaseModel:
         stmt = (

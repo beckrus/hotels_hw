@@ -1,3 +1,4 @@
+import logging
 import os
 
 from PIL import Image
@@ -7,6 +8,7 @@ from src.tasks.celery_app import celery_instance
 
 @celery_instance.task
 def resize_image(image_path: str):
+    logging.debug(f"Calling func with image_path: {image_path}")
     sizes = [1000, 500, 200]
     output_folder = os.path.dirname(image_path)
     img = Image.open(image_path)
@@ -25,3 +27,5 @@ def resize_image(image_path: str):
         output_path = os.path.join(output_folder, new_file_name)
 
         img_resized.save(output_path)
+
+    logging.info(f"Images were saved in sizes:{sizes}, in a folder: {output_folder}")

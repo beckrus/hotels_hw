@@ -8,8 +8,10 @@ class HotelsBaseExceptions(Exception):
 class ItemNotFoundException(HotelsBaseExceptions):
     detail = "Object not found"
 
+
 class FKNotFoundException(HotelsBaseExceptions):
     detail = "Object not found"
+
 
 class TooManyItemFoundException(HotelsBaseExceptions):
     detail = "To many objects found"

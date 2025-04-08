@@ -18,7 +18,7 @@ async def get_hotel_rooms(
 ):
     if date_from > date_to:
         raise HTTPException(status_code=422, detail="date from > date to")
-    
+
     rooms = await db.rooms.get_filtered_by_time(
         hotel_id=hotel_id, date_from=date_from, date_to=date_to
     )
@@ -72,9 +72,9 @@ async def add_hotel_room(
 ):
     try:
         room = await db.rooms.add(hotel_id=hotel_id, data=data)
-    except Exception:
-        raise HTTPException(status_code=400, detail="Hotel not found")
-    
+    except FKNotFoundException:
+        raise HTTPException(status_code=404, detail="Hotel not found")
+
     facilities_data = [
         RoomsFacilitiesAddSchema.model_validate({"room_id": room.id, "facility_id": n})
         for n in data.facilities

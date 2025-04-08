@@ -1,3 +1,4 @@
+from asyncpg import UniqueViolationError
 from pydantic import BaseModel
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import insert, select
@@ -21,8 +22,10 @@ class UsersRepository(BaseRepository):
             user_dict.pop("password_hash")
             return self.mapper.map_to_domain_entity(user_dict)
         except IntegrityError as e:
-            if e.orig.sqlstate == "23505":
-                raise DuplicateItemException
+            if isinstance(e.orig.__cause__, UniqueViolationError):
+                raise DuplicateItemException from e
+            # if e.orig.sqlstate == "23505":
+            #     raise DuplicateItemException
             else:
                 raise e
 

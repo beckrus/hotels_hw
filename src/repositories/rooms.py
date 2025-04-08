@@ -1,4 +1,5 @@
 from datetime import date
+from asyncpg import ForeignKeyViolationError
 from sqlalchemy import delete, insert, select, update
 from sqlalchemy.exc import NoResultFound, IntegrityError
 from sqlalchemy.orm import selectinload, joinedload
@@ -31,8 +32,10 @@ class RoomsRepository(BaseRepository):
             result = await self.session.execute(stmt)
             return self.mapper.map_to_domain_entity(result.scalars().one())
         except IntegrityError as e:
-            if e.orig.sqlstate == 23503:
-                raise FKNotFoundException
+            if isinstance(e.orig.__cause__, ForeignKeyViolationError):
+                raise FKNotFoundException from e
+            # if e.orig.sqlstate == 23503:
+            #     raise FKNotFoundException
             else:
                 raise e
 
