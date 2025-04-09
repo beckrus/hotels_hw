@@ -9,7 +9,7 @@ from tests.conftest import TEST_USERNAME, TEST_PASSWORD
         ("admin", "admin@example.com", "", "password", 422),
         ("admin", "admin@example.com", "", "", 422),
         ("admin", "admin@example.com", "password", "", 422),
-        ("admin", "admin@example.com", "password", "password", 400),
+        ("admin", "admin@example.com", "password", "password", 409),
         ("user", "admin@example.com", "password", "", 422),
         ("user", "user@example.com", "password", "password", 200),
         ("user2", "user2@example.com", "password", "password", 200),

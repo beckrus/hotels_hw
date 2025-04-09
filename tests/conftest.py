@@ -3,7 +3,7 @@ from unittest import mock
 
 mock.patch("fastapi_cache.decorator.cache", lambda *args, **kwargs: lambda f: f).start()
 import json
-from typing import AsyncGenerator
+from typing import Any, AsyncGenerator
 from httpx import ASGITransport, AsyncClient
 import pytest
 from src.api.dependencies import get_db, get_db_manager_null_pull
@@ -26,13 +26,13 @@ async def check_mode() -> None:
     assert settings.MODE == "TEST"
 
 
-async def get_db_null_pool() -> AsyncGenerator[DBManager]:
+async def get_db_null_pool() -> AsyncGenerator[DBManager, Any]:
     async with get_db_manager_null_pull() as db:
         yield db
 
 
 @pytest.fixture(scope="function")
-async def db() -> AsyncGenerator[DBManager]:
+async def db() -> AsyncGenerator[DBManager, Any]:
     async for db in get_db_null_pool():
         yield db
 
@@ -41,7 +41,7 @@ app.dependency_overrides[get_db] = get_db_null_pool
 
 
 @pytest.fixture()
-async def ac() -> AsyncGenerator[AsyncClient]:
+async def ac() -> AsyncGenerator[AsyncClient, Any]:
     async with AsyncClient(transport=ASGITransport(app), base_url="http://test") as ac:
         yield ac
 

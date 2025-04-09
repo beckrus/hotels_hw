@@ -34,8 +34,8 @@ date_to = (date.today() + timedelta(days=10)).strftime("%Y-%m-%d")
         (1, date_from, date_to, 200),
         (1, date_from, date_to, 200),
         (1, date_from, date_to, 200),
-        (1, date_from, date_to, 400),
-        (1, date_from, date_to, 400),
+        (1, date_from, date_to, 409),
+        (1, date_from, date_to, 409),
     ],
 )
 async def test_post_bookings_w_auth(

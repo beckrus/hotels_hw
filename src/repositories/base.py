@@ -1,7 +1,7 @@
 import logging
 from typing import Type, TypeVar, Generic
 from pydantic import BaseModel
-from sqlalchemy import Sequence, delete, select, update
+from sqlalchemy import delete, select, update
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -58,7 +58,9 @@ class BaseRepository(Generic[T]):
             if e.orig.sqlstate == "23505":
                 raise DuplicateItemException
             else:
-                logging.critical(f"Unknown error occurred, error type: {type(e.orig.__cause__)=}, input data: {data}, source: BaseRepository.add")
+                logging.critical(
+                    f"Unknown error occurred, error type: {type(e.orig.__cause__)=}, input data: {data}, source: BaseRepository.add"
+                )
                 raise e
 
     async def add_bulk(self, data: list[BaseModel]) -> BaseModel:

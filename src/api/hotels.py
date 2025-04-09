@@ -1,15 +1,16 @@
-from datetime import date, datetime
+from datetime import date
 from fastapi import APIRouter, Body, Depends, HTTPException, Query
 from fastapi_cache.decorator import cache
 
+from src.services.hotels import HotelsService
 from src.repositories.exceptions import ItemNotFoundException
 from src.api.dependencies import DBDep, PaginationDep, get_admin_user
-from src.schemas.hotels import HotelAddSchema, HotelPatchSchema
+from src.schemas.hotels import HotelAddSchema, HotelPatchSchema, HotelSchema
 
 router = APIRouter(prefix="/hotels", tags=["Hotels"])
 
 
-@router.get("")
+@router.get("", response_model=list[HotelSchema])
 @cache(expire=10)
 async def get_hotels(
     pagination: PaginationDep,
@@ -21,13 +22,8 @@ async def get_hotels(
 ):
     if date_from > date_to:
         raise HTTPException(status_code=422, detail="date from > date to")
-    return await db.hotels.get_filtered_by_time(
-        location=location,
-        title=title,
-        limit=pagination.per_page,
-        offset=(pagination.page - 1) * pagination.per_page,
-        date_from=date_from,
-        date_to=date_to,
+    return await HotelsService(db).get_hotels(
+        pagination, title, location, date_from, date_to
     )
 
 
@@ -35,7 +31,7 @@ async def get_hotels(
 @cache(expire=10)
 async def get_hotel_by_id(id: int, db: DBDep):
     try:
-        return await db.hotels.get_one_by_id(id=id)
+        return await HotelsService(db).get_hotel_by_id(id)
     except ItemNotFoundException:
         raise HTTPException(status_code=404, detail="Hotel not found")
 
@@ -43,8 +39,7 @@ async def get_hotel_by_id(id: int, db: DBDep):
 @router.delete("/{hotel_id}", dependencies=[Depends(get_admin_user)])
 async def delete_hotel(hotel_id: int, db: DBDep):
     try:
-        await db.hotels.delete(id=hotel_id)
-        await db.commit()
+        await HotelsService(db).delete_hotel(hotel_id)
         return {"status": "OK"}
     except ItemNotFoundException:
         raise HTTPException(status_code=404, detail="Hotel not found")
@@ -66,17 +61,14 @@ async def create_hotel(
         }
     ),
 ):
-    hotel = await db.hotels.add(hotel_data)
-    await db.commit()
+    hotel = await HotelsService(db).create_hotel(hotel_data)
     return {"status": "OK", "data": hotel}
 
 
-# patch, put
 @router.patch("/{hotel_id}", dependencies=[Depends(get_admin_user)])
 async def update_hotel(hotel_id: int, hotel_data: HotelPatchSchema, db: DBDep):
     try:
-        hotel = await db.hotels.edit(hotel_id, hotel_data, exclude_unset=True)
-        await db.commit()
+        hotel = await HotelsService(db).update_hotel(hotel_id, hotel_data)
         return {"status": "OK", "data": hotel}
     except ItemNotFoundException:
         raise HTTPException(status_code=404, detail="Hotel not found")
@@ -85,8 +77,7 @@ async def update_hotel(hotel_id: int, hotel_data: HotelPatchSchema, db: DBDep):
 @router.put("/{hotel_id}", dependencies=[Depends(get_admin_user)])
 async def rewrite_hotel(hotel_id: int, hotel_data: HotelAddSchema, db: DBDep):
     try:
-        hotel = await db.hotels.edit(hotel_id, hotel_data)
-        await db.commit()
+        hotel = await HotelsService(db).update_hotel(hotel_id, hotel_data)
         return {"status": "OK", "data": hotel}
     except ItemNotFoundException:
         raise HTTPException(status_code=404, detail="Hotel not found")
