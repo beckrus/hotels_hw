@@ -1,8 +1,14 @@
-from fastapi import APIRouter, Body, Depends, HTTPException, Query
+from fastapi import APIRouter, Body, Depends, Query
 from fastapi_cache.decorator import cache
 
 from schemas.facilities import FacilitiesAddSchema
-from src.repositories.exceptions import DuplicateItemException, ItemNotFoundException
+from services.facilities import FacilitiesService
+from src.exceptions import (
+    FacilityDuplicateException,
+    FacilityDuplicateHTTPException,
+    FacilityNotFoundException,
+    FacilityNotFoundHttpException,
+)
 from src.api.dependencies import DBDep, get_admin_user
 
 
@@ -15,17 +21,15 @@ async def get_facilities(
     db: DBDep,
     name: str | None = Query(description="Name", default=None),
 ):
-    filter = {"name": name} if name else {}
-
-    return await db.facilities.get_filtered(**filter)
+    return await FacilitiesService(db).get_facilities(name)
 
 
 @router.get("/{facility_id}")
 async def get_facility_by_id(facility_id: int, db: DBDep):
     try:
-        return await db.facilities.get_one_by_id(id=facility_id)
-    except ItemNotFoundException:
-        raise HTTPException(status_code=404, detail="Item not found")
+        return await FacilitiesService(db).get_facility_by_id(facility_id)
+    except FacilityNotFoundException:
+        raise FacilityNotFoundHttpException
 
 
 @router.post("", dependencies=[Depends(get_admin_user)])
@@ -48,25 +52,23 @@ async def create_facility(
         facility = await db.facilities.add(data)
         await db.commit()
         return {"status": "OK", "data": facility}
-    except DuplicateItemException:
-        raise HTTPException(status_code=400, detail="Item already exists")
+    except FacilityDuplicateException:
+        raise FacilityDuplicateHTTPException
 
 
 @router.patch("/{facility_id}", dependencies=[Depends(get_admin_user)])
 async def update_facility(facility_id: int, data: FacilitiesAddSchema, db: DBDep):
     try:
-        facility = await db.facilities.edit(facility_id, data, exclude_unset=True)
-        await db.commit()
+        facility = await FacilitiesService(db).update_facility(facility_id, data)
         return {"status": "OK", "data": facility}
-    except ItemNotFoundException:
-        raise HTTPException(status_code=404, detail="Item not found")
+    except FacilityNotFoundException:
+        raise FacilityNotFoundHttpException
 
 
 @router.delete("/{facility_id}", dependencies=[Depends(get_admin_user)])
 async def delete_facility(facility_id: int, db: DBDep):
     try:
-        await db.facilities.delete(id=facility_id)
-        await db.commit()
+        await FacilitiesService(db).delete(facility_id)
         return {"status": "OK"}
-    except ItemNotFoundException:
-        raise HTTPException(status_code=404, detail="Item not found")
+    except FacilityNotFoundException:
+        raise FacilityNotFoundHttpException

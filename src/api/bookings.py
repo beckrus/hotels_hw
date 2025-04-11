@@ -1,6 +1,14 @@
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends
 
-from src.repositories.exceptions import ItemNotFoundException, NoRoomAvailableException
+from src.exceptions import (
+    BookingNotFoundException,
+    BookingNotFoundHttpException,
+    NoRoomAvailableException,
+    NoRoomAvailableHttpException,
+    RoomNotFoundException,
+    RoomNotFoundHttpException,
+)
+from src.services.bookings import BookingsService
 from src.schemas.bookings import BookingsAddSchema
 from src.api.dependencies import DBDep, UserIdDep, get_admin_user
 
@@ -10,13 +18,13 @@ router = APIRouter(prefix="/bookings", tags=["Bookings"])
 
 @router.get("/", dependencies=[Depends(get_admin_user)])
 async def get_all_bookings(db: DBDep):
-    bookings = await db.bookings.get_all()
+    bookings = await BookingsService(db).get_all_bookings()
     return {"status": "OK", "data": bookings}
 
 
 @router.get("/me")
-async def get_users_bookings(request: Request, db: DBDep, user_id: UserIdDep):
-    bookings = await db.bookings.get_filtered(user_id=user_id)
+async def get_users_bookings(db: DBDep, user_id: UserIdDep):
+    bookings = await BookingsService(db).get_users_bookings(user_id)
     return {"status": "OK", "data": bookings}
 
 
@@ -26,7 +34,7 @@ async def get_booking(
     booking_id: int,
     user_id: UserIdDep,
 ):
-    booking = await db.bookings.get_filtered(id=booking_id, user_id=user_id)
+    booking = await BookingsService(db).get_booking(id=booking_id, user_id=user_id)
     return {"status": "OK", "data": booking}
 
 
@@ -37,18 +45,12 @@ async def add_booking(
     user_id: UserIdDep,
 ):
     try:
-        room = await db.rooms.get_one_by_id(id=data.room_id)
-    except ItemNotFoundException:
-        raise HTTPException(status_code=404, detail="Room not found")
-    try:
-        room_price = room.price * (data.date_to - data.date_from).days
-        booking = await db.bookings.add_booking(
-            user_id=user_id, price=room_price, data=data
-        )
-        await db.commit()
+        booking = await BookingsService(db).add_booking(user_id, data)
         return {"status": "OK", "data": booking}
+    except RoomNotFoundException as e:
+        raise RoomNotFoundHttpException from e
     except NoRoomAvailableException:
-        raise HTTPException(status_code=409, detail="No free room available")
+        raise NoRoomAvailableHttpException
 
 
 @router.delete("/{booking_id}")
@@ -58,9 +60,7 @@ async def delete_booking(
     user_id: UserIdDep,
 ):
     try:
-        booking = await db.bookings.get_filtered(id=booking_id, user_id=user_id)
-    except ItemNotFoundException:
-        raise HTTPException(status_code=404, detail="Item not found")
-    await db.bookings.delete(booking_id=booking.id)
-    await db.commit()
-    return {"status": "OK"}
+        await BookingsService(db).delete_booking(booking_id, user_id)
+        return {"status": "OK"}
+    except BookingNotFoundException:
+        raise BookingNotFoundHttpException

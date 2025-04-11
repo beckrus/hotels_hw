@@ -3,7 +3,10 @@ from fastapi import APIRouter, Body, Depends, HTTPException, Query
 from fastapi_cache.decorator import cache
 
 from src.services.hotels import HotelsService
-from src.repositories.exceptions import ItemNotFoundException
+from src.exceptions import (
+    HotelNotFoundException,
+    HotelNotFoundHttpException,
+)
 from src.api.dependencies import DBDep, PaginationDep, get_admin_user
 from src.schemas.hotels import HotelAddSchema, HotelPatchSchema, HotelSchema
 
@@ -32,8 +35,8 @@ async def get_hotels(
 async def get_hotel_by_id(id: int, db: DBDep):
     try:
         return await HotelsService(db).get_hotel_by_id(id)
-    except ItemNotFoundException:
-        raise HTTPException(status_code=404, detail="Hotel not found")
+    except HotelNotFoundException:
+        raise HotelNotFoundHttpException
 
 
 @router.delete("/{hotel_id}", dependencies=[Depends(get_admin_user)])
@@ -41,8 +44,8 @@ async def delete_hotel(hotel_id: int, db: DBDep):
     try:
         await HotelsService(db).delete_hotel(hotel_id)
         return {"status": "OK"}
-    except ItemNotFoundException:
-        raise HTTPException(status_code=404, detail="Hotel not found")
+    except HotelNotFoundException:
+        raise HotelNotFoundHttpException
 
 
 @router.post("", dependencies=[Depends(get_admin_user)])
@@ -70,8 +73,8 @@ async def update_hotel(hotel_id: int, hotel_data: HotelPatchSchema, db: DBDep):
     try:
         hotel = await HotelsService(db).update_hotel(hotel_id, hotel_data)
         return {"status": "OK", "data": hotel}
-    except ItemNotFoundException:
-        raise HTTPException(status_code=404, detail="Hotel not found")
+    except HotelNotFoundException:
+        raise HotelNotFoundHttpException
 
 
 @router.put("/{hotel_id}", dependencies=[Depends(get_admin_user)])
@@ -79,5 +82,5 @@ async def rewrite_hotel(hotel_id: int, hotel_data: HotelAddSchema, db: DBDep):
     try:
         hotel = await HotelsService(db).update_hotel(hotel_id, hotel_data)
         return {"status": "OK", "data": hotel}
-    except ItemNotFoundException:
-        raise HTTPException(status_code=404, detail="Hotel not found")
+    except HotelNotFoundException:
+        raise HotelNotFoundHttpException

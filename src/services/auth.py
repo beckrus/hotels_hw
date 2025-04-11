@@ -2,6 +2,19 @@ from passlib.context import CryptContext
 from datetime import datetime, timedelta, timezone
 import jwt
 
+from src.exceptions import (
+    DuplicateItemException,
+    ItemNotFoundException,
+    PasswordsNotMatchException,
+    UserAuthException,
+    UserDuplicateException,
+    UserNotFoundException,
+)
+from src.schemas.users import (
+    UserHashedPwdAddSchema,
+    UserLoginSchema,
+    UserRequestAddSchema,
+)
 from src.config import settings
 from src.services.base import BaseService
 
@@ -35,3 +48,33 @@ class AuthService(BaseService):
             token, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM]
         )
         return payload
+
+    async def create_user(self, data: UserRequestAddSchema):
+        data.is_superuser = False
+        data.is_varified = False
+        if data.password != data.password_confirm:
+            raise PasswordsNotMatchException
+        hashed_password = self.hash_password(data.password.get_secret_value())
+        user_data = UserHashedPwdAddSchema(
+            **data.model_dump(), password_hash=hashed_password
+        )
+
+        try:
+            user = await self.db.users.add(user_data)
+            await self.db.commit()
+            return user
+        except DuplicateItemException as e:
+            raise UserDuplicateException from e
+
+    async def authenticate_user(self, data: UserLoginSchema) -> str:
+        user = await self.db.users.get_one_with_hashed_password(username=data.username)
+        if user and self.verify_password(data.password, user.password_hash):
+            return AuthService.create_access_token({"user_id": user.id})
+        raise UserAuthException
+
+    async def me(self, user_id: int):
+        try:
+            user = await self.db.users.get_one_by_id(id=user_id)
+            return user
+        except ItemNotFoundException:
+            UserNotFoundException

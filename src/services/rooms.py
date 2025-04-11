@@ -1,5 +1,13 @@
 from datetime import date
-from schemas.facilities import RoomsFacilitiesAddSchema
+from src.exceptions import (
+    FKNotFoundException,
+    FacilityNotFoundException,
+    FacilityNotFoundHttpException,
+    HotelNotFoundException,
+    ItemNotFoundException,
+    RoomNotFoundException,
+)
+from src.schemas.facilities import RoomsFacilitiesAddSchema
 from src.schemas.rooms import RoomsPatchSchema
 from src.services.base import BaseService
 
@@ -11,26 +19,40 @@ class RoomsService(BaseService):
         )
 
     async def get_room_by_id(self, hotel_id: int, room_id: int):
-        return await self.db.rooms.get_one_by_id_with_rel(hotel_id=hotel_id, id=room_id)
+        try:
+            return await self.db.rooms.get_one_by_id_with_rel(
+                hotel_id=hotel_id, id=room_id
+            )
+        except ItemNotFoundException as e:
+            raise RoomNotFoundException from e
 
     async def create_room(self, hotel_id, data):
-        room = await self.db.rooms.add(hotel_id=hotel_id, data=data)
-        await self.db.commit()
-        return room
+        try:
+            room = await self.db.rooms.add(hotel_id=hotel_id, data=data)
+            await self.db.commit()
+            return room
+        except FKNotFoundException as e:
+            raise HotelNotFoundException from e
 
     async def update_room(self, hotel_id: int, room_id: int, data: RoomsPatchSchema):
-        room = await self.db.rooms.edit(
-            hotel_id=hotel_id, room_id=room_id, data=data, exclude_unset=True
-        )
-        room_facilities_add = [
-            RoomsFacilitiesAddSchema.model_validate(
-                {"room_id": room.id, "facility_id": n}
+        try:
+            room = await self.db.rooms.edit(
+                hotel_id=hotel_id, room_id=room_id, data=data, exclude_unset=True
             )
-            for n in data.facilities
-        ]
-        await self.db.rooms_facilities.add_bulk(room_facilities_add)
-        await self.db.commit()
-        return room
+            room_facilities_add = [
+                RoomsFacilitiesAddSchema.model_validate(
+                    {"room_id": room.id, "facility_id": n}
+                )
+                for n in data.facilities
+            ]
+
+            await self.db.rooms_facilities.add_bulk(room_facilities_add)
+            await self.db.commit()
+            return room
+        except FacilityNotFoundException:
+            raise FacilityNotFoundHttpException
+        except RoomNotFoundException:
+            raise RoomNotFoundException
 
     async def rewrite_room(self, hotel_id: int, room_id: int, data: RoomsPatchSchema):
         room = await self.db.rooms.edit(
@@ -55,6 +77,10 @@ class RoomsService(BaseService):
 
         return room
 
-    async def delete_room(self, room_id: int):
-        await self.db.rooms.delete(id=room_id)
-        await self.db.commit()
+    async def delete_room(self, hotel_id: int, room_id: int):
+        try:
+            await self.get_room_by_id(hotel_id, room_id)
+            await self.db.rooms.delete(hotel_id, room_id)
+            await self.db.commit()
+        except ItemNotFoundException as e:
+            raise RoomNotFoundException from e

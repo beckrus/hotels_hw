@@ -95,7 +95,37 @@ async def test_add_and_get_my_bookings(
     )
     assert res_add.status_code == status_code
     my_bookings = await authenticated_ac.get("/bookings/me")
-    my_bookings.status_code == status_code
+    assert my_bookings.status_code == status_code
     data = my_bookings.json()
     assert "data" in data
     assert len(data["data"]) == count
+
+
+async def test_add_and_delete_bookings(
+    authenticated_ac,
+):
+    my_bookings = await authenticated_ac.get("/bookings/me")
+    assert my_bookings.status_code == 200
+    data = my_bookings.json()
+    assert "data" in data
+    bookings_len = len(data["data"])
+    res_add = await authenticated_ac.post(
+        "/bookings/",
+        json={
+            "room_id": 1,
+            "date_from": date_from,
+            "date_to": date_to,
+        },
+    )
+    assert res_add.status_code == 200
+    data = res_add.json()
+    assert data["data"]["room_id"] == 1
+
+    resp_del = await authenticated_ac.delete(f"/bookings/{data['data']['id']}")
+    assert resp_del.status_code == 200
+    my_bookings_after_del = await authenticated_ac.get("/bookings/me")
+    data_after_del = my_bookings_after_del.json()
+    assert "data" in data_after_del
+    assert len(data_after_del["data"]) == bookings_len
+    resp_del_2 = await authenticated_ac.delete(f"/bookings/{data['data']['id']}")
+    assert resp_del_2.status_code == 404

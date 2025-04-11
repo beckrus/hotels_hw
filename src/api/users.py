@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from src.api.dependencies import DBDep, UserIdDep, get_admin_user
 from src.services.auth import AuthService
-from src.repositories.exceptions import ItemNotFoundException
+from exceptions import ItemNotFoundException
 from src.schemas.users import UserRequestUpdateSchema
 
 router = APIRouter(prefix="/users", tags=["Users"])

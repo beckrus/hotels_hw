@@ -6,11 +6,10 @@ from sqlalchemy.exc import NoResultFound
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.repositories.mappers.base import DataMapper
-from src.repositories.exceptions import DuplicateItemException, ItemNotFoundException
+from src.exceptions import DuplicateItemException, ItemNotFoundException
 from sqlalchemy.exc import IntegrityError
 
 T = TypeVar("T")
-
 
 class BaseRepository(Generic[T]):
     model: Type[T]

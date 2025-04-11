@@ -1,7 +1,7 @@
 from datetime import date
 from sqlalchemy import insert, select
 
-from src.repositories.exceptions import NoRoomAvailableException
+from src.exceptions import NoRoomAvailableException
 from src.repositories.utils import rooms_ids_for_booking
 from src.repositories.mappers.mappers import BookingsDataMapper
 from src.models.bookings import BookingsOrm

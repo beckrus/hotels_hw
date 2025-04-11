@@ -4,7 +4,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy import insert, select
 from src.repositories.mappers.mappers import UsersDataMapper
 from src.models.users import UsersOrm
-from src.repositories.exceptions import DuplicateItemException
+from src.exceptions import DuplicateItemException
 from src.schemas.users import UserHashedSchema, UserShowSchema
 from src.repositories.base import BaseRepository
 

@@ -6,7 +6,7 @@ from sqlalchemy.orm import selectinload, joinedload
 
 from src.repositories.mappers.mappers import RoomsDataMapper, RoomsWithRelDataMapper
 from src.repositories.utils import rooms_ids_for_booking
-from src.repositories.exceptions import ItemNotFoundException, FKNotFoundException
+from src.exceptions import ItemNotFoundException, FKNotFoundException
 from src.models.rooms import RoomsOrm
 from src.schemas.rooms import (
     RoomsDbSchema,

@@ -1,10 +1,17 @@
 from datetime import date
 from fastapi import APIRouter, Body, Depends, HTTPException, Query
 
-from schemas.facilities import RoomsFacilitiesAddSchema
-from services.rooms import RoomsService
+from src.schemas.facilities import RoomsFacilitiesAddSchema
+from src.services.rooms import RoomsService
 from src.api.dependencies import DBDep, get_admin_user
-from src.repositories.exceptions import FKNotFoundException, ItemNotFoundException
+from src.exceptions import (
+    FacilityNotFoundException,
+    FacilityNotFoundHttpException,
+    HotelNotFoundException,
+    HotelNotFoundHttpException,
+    RoomNotFoundException,
+    RoomNotFoundHttpException,
+)
 from src.schemas.rooms import RoomsAddSchema, RoomsPatchSchema, RoomsPutSchema
 
 router = APIRouter(prefix="/hotels", tags=["Rooms"])
@@ -29,8 +36,8 @@ async def get_hotel_room(hotel_id: int, room_id: int, db: DBDep):
     try:
         room = await RoomsService(db).get_room_by_id(hotel_id, room_id)
         return {"status": "OK", "data": room}
-    except ItemNotFoundException:
-        raise HTTPException(status_code=404, detail="Room not found")
+    except RoomNotFoundException:
+        raise RoomNotFoundHttpException
 
 
 @router.post("/{hotel_id}/rooms", dependencies=[Depends(get_admin_user)])
@@ -71,17 +78,20 @@ async def add_hotel_room(
 ):
     try:
         room = await RoomsService(db).create_room(hotel_id, data)
-    except FKNotFoundException:
-        raise HTTPException(status_code=404, detail="Hotel not found")
-
-    facilities_data = [
-        RoomsFacilitiesAddSchema.model_validate({"room_id": room.id, "facility_id": n})
-        for n in data.facilities
-    ]
-    if facilities_data:
-        await db.rooms_facilities.add_bulk(facilities_data)
-    await db.commit()
-    return {"status": "OK", "data": room}
+        facilities_data = [
+            RoomsFacilitiesAddSchema.model_validate(
+                {"room_id": room.id, "facility_id": n}
+            )
+            for n in data.facilities
+        ]
+        if facilities_data:
+            await db.rooms_facilities.add_bulk(facilities_data)
+        await db.commit()
+        return {"status": "OK", "data": room}
+    except HotelNotFoundException:
+        raise HotelNotFoundHttpException
+    except FacilityNotFoundException:
+        raise FacilityNotFoundHttpException
 
 
 @router.patch("/{hotel_id}/rooms/{room_id}", dependencies=[Depends(get_admin_user)])
@@ -96,11 +106,14 @@ async def edit_hotel_room(
 
     """
     try:
-        room = await RoomsService(db).update_room(room_id, data)
-
+        room = await RoomsService(db).update_room(hotel_id, room_id, data)
         return {"status": "OK", "data": room}
-    except ItemNotFoundException:
-        raise HTTPException(status_code=404, detail="Room not found")
+    except HotelNotFoundException:
+        raise HotelNotFoundHttpException
+    except FacilityNotFoundException:
+        raise FacilityNotFoundHttpException
+    except RoomNotFoundException:
+        raise RoomNotFoundException
 
 
 @router.put("/{hotel_id}/rooms/{room_id}", dependencies=[Depends(get_admin_user)])
@@ -117,20 +130,16 @@ async def replace_hotel_room(
     including its title, description, price, quantity, and facilities.
     """
     try:
-        room = await RoomsService(db).rewrite_room(room_id, data)
+        room = await RoomsService(db).rewrite_room(hotel_id, room_id, data)
         return {"status": "OK", "data": room}
-    except ItemNotFoundException:
-        raise HTTPException(status_code=404, detail="Room not found")
+    except RoomNotFoundException:
+        raise RoomNotFoundHttpException
 
 
 @router.delete("/{hotel_id}/rooms/{room_id}", dependencies=[Depends(get_admin_user)])
 async def del_hotel_room(hotel_id: int, room_id: int, db: DBDep):
     try:
-        await RoomsService(db).delete_room(
-            hotel_id=hotel_id,
-            room_id=room_id,
-        )
-        await db.commit()
+        await RoomsService(db).delete_room(hotel_id=hotel_id, room_id=room_id)
         return {"status": "OK"}
-    except ItemNotFoundException:
-        raise HTTPException(status_code=404, detail="Room not found")
+    except RoomNotFoundException:
+        raise RoomNotFoundHttpException

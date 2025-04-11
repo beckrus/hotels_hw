@@ -1,9 +1,10 @@
-from typing import Annotated
+from typing import Annotated, Any, AsyncGenerator
 from fastapi.security import OAuth2PasswordBearer
 from jwt import InvalidTokenError
 from pydantic import BaseModel
 from fastapi import HTTPException, Query, Depends, Request
 
+from src.exceptions import AccessForbiddenHttpException, TokenErrorHttpException
 from src.repositories.users import UsersRepository
 from src.services.auth import AuthService
 from src.database import async_session_maker, async_session_maker_null_pool
@@ -42,7 +43,7 @@ def get_current_user(request: Request, token: str = Depends(oauth2_scheme)) -> i
         token_data = AuthService().decode_token(token)
         return token_data["user_id"]
     except InvalidTokenError:
-        raise HTTPException(status_code=401, detail="Could not validate credentials")
+        raise TokenErrorHttpException
 
 
 async def get_admin_user(
@@ -52,7 +53,7 @@ async def get_admin_user(
         users_repo = UsersRepository(session)
         user = await users_repo.get_one_by_id(user_id)
         if not user.is_superuser:
-            raise HTTPException(status_code=403, detail="Forbidden")
+            raise AccessForbiddenHttpException
         return user_id
 
 
@@ -69,7 +70,7 @@ def get_db_manager_null_pull() -> DBManager:
     return DBManager(session_factory=async_session_maker_null_pool)
 
 
-async def get_db() -> DBManager:
+async def get_db() -> AsyncGenerator[DBManager, Any]:
     async with get_db_manager() as db:
         yield db
 
