@@ -4,7 +4,7 @@ from src.exceptions import (
     FacilityNotFoundException,
     ItemNotFoundException,
 )
-from schemas.facilities import FacilitiesAddSchema
+from src.schemas.facilities import FacilitiesAddSchema
 from src.services.base import BaseService
 
 

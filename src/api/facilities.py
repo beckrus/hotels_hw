@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Body, Depends, Query
 from fastapi_cache.decorator import cache
 
-from schemas.facilities import FacilitiesAddSchema
-from services.facilities import FacilitiesService
+from src.schemas.facilities import FacilitiesAddSchema
+from src.services.facilities import FacilitiesService
 from src.exceptions import (
     FacilityDuplicateException,
     FacilityDuplicateHTTPException,

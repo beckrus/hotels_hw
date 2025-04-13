@@ -1,4 +1,21 @@
 services:
+  backend:
+    container_name: "booking_backend"
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - 8000:8000
+    depends_on:
+      redis:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+    networks:
+       - booking_net
   db:
     image: postgres
     restart: always
@@ -16,27 +33,63 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
-  cache:
-    image: redis:6.2-alpine
-    restart: always
+    networks:
+       - booking_net
+
+  celery_worker:
+    container_name: "booking_celery_worker"
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: celery_worker
+    command: "celery --app=src.tasks.celery_app:celery_instance worker -l INFO"
+    env_file:
+      - .env
+    depends_on:
+      - backend
+    networks:
+       - booking_net
+
+  celery_beat:
+    container_name: "booking_celery_beat"
+    build:
+      context: .
+      dockerfile: Dockerfile
+    # image: celery_beat
+    command: "celery --app=src.tasks.celery_app:celery_instance beat -l INFO"
+    env_file:
+      - .env
+    depends_on:
+      - backend
+    networks:
+       - booking_net
+
+  flower:
+    container_name: "booking_flower"
+    build:
+      context: .
+      dockerfile: Dockerfile
+    # image: celery_flower
+    command: "celery --app=src.tasks.celery_app:celery_instance flower --port=5555"
+    env_file:
+      - .env
     ports:
-      - '6379:6379'
-    command: redis-server --save 20 1 --loglevel warning
+      - 5555:5555
+    depends_on:
+      - backend
+    networks:
+       - booking_net
+
+  redis:
+    image: redis:7.4-alpine
+    restart: always
     volumes: 
       - ./cache:/data
-
-  db_test:
-    image: postgres
-    restart: always
-    shm_size: 128mb
-    ports:
-      - 5433:5432
-    environment:
-      POSTGRES_USER: test
-      POSTGRES_PASSWORD: test
-      POSTGRES_DB: test
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -d postgres" ]
-      interval: 30s
-      timeout: 10s
-      retries: 5
+      test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
+    networks:
+       - booking_net
+
+networks:
+   booking_net:
+    name: booking_net

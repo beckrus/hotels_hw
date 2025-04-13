@@ -1,5 +1,5 @@
 from datetime import date
-from api.dependencies import PaginationDep
+from src.api.dependencies import PaginationDep
 from src.exceptions import HotelNotFoundException, ItemNotFoundException
 from src.services.base import BaseService
 
