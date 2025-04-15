@@ -3,7 +3,7 @@ from fastapi import APIRouter, Body, Depends, HTTPException, Query
 
 from src.schemas.facilities import RoomsFacilitiesAddSchema
 from src.services.rooms import RoomsService
-from src.api.dependencies import DBDep, get_admin_user
+from src.api.dependencies import DBDep, get_current_user
 from src.exceptions import (
     FacilityNotFoundException,
     FacilityNotFoundHttpException,
@@ -40,7 +40,7 @@ async def get_hotel_room(hotel_id: int, room_id: int, db: DBDep):
         raise RoomNotFoundHttpException
 
 
-@router.post("/{hotel_id}/rooms", dependencies=[Depends(get_admin_user)])
+@router.post("/{hotel_id}/rooms", dependencies=[Depends(get_current_user)])
 async def add_hotel_room(
     db: DBDep,
     hotel_id: int,
@@ -94,7 +94,7 @@ async def add_hotel_room(
         raise FacilityNotFoundHttpException
 
 
-@router.patch("/{hotel_id}/rooms/{room_id}", dependencies=[Depends(get_admin_user)])
+@router.patch("/{hotel_id}/rooms/{room_id}", dependencies=[Depends(get_current_user)])
 async def edit_hotel_room(
     hotel_id: int, room_id: int, data: RoomsPatchSchema, db: DBDep
 ):
@@ -116,7 +116,7 @@ async def edit_hotel_room(
         raise RoomNotFoundException
 
 
-@router.put("/{hotel_id}/rooms/{room_id}", dependencies=[Depends(get_admin_user)])
+@router.put("/{hotel_id}/rooms/{room_id}", dependencies=[Depends(get_current_user)])
 async def replace_hotel_room(
     hotel_id: int,
     room_id: int,
@@ -136,7 +136,7 @@ async def replace_hotel_room(
         raise RoomNotFoundHttpException
 
 
-@router.delete("/{hotel_id}/rooms/{room_id}", dependencies=[Depends(get_admin_user)])
+@router.delete("/{hotel_id}/rooms/{room_id}", dependencies=[Depends(get_current_user)])
 async def del_hotel_room(hotel_id: int, room_id: int, db: DBDep):
     try:
         await RoomsService(db).delete_room(hotel_id=hotel_id, room_id=room_id)

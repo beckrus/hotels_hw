@@ -17,6 +17,7 @@ from src.api.rooms import router as rooms_router
 from src.api.bookings import router as bookings_router
 from src.api.facilities import router as facility_router
 from src.api.images import router as image_router
+from src.api.status import router as status_router
 from src.init import redis_manager
 
 FORMAT = "%(asctime)s::%(levelname)s::%(message)s"
@@ -37,7 +38,7 @@ async def lifespan(app: FastAPI):
 # if settings.MODE == 'TEST':
 #     FastAPICache.init(InMemoryBackend(), prefix="fastapi-cache")
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(lifespan=lifespan, title='Bookings')
 
 
 app.include_router(auth_router)
@@ -47,7 +48,7 @@ app.include_router(rooms_router)
 app.include_router(bookings_router)
 app.include_router(facility_router)
 app.include_router(image_router)
-
+app.include_router(status_router)
 
 if __name__ == "__main__":
     uvicorn.run("main:app", reload=True, host="0.0.0.0", port=8000)

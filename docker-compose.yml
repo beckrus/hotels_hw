@@ -18,6 +18,7 @@ services:
        - booking_net
   db:
     image: postgres
+    container_name: 'booking_db'
     restart: always
     shm_size: 128mb
     ports:
@@ -82,6 +83,7 @@ services:
 
   redis:
     image: redis:7.4-alpine
+    container_name: 'booking_redis'
     restart: always
     volumes: 
       - ./cache:/data

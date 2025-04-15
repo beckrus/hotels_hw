@@ -6,6 +6,7 @@ from src.services.auth import AuthService
 from src.exceptions import (
     PasswordsNotMatchException,
     PasswordsNotMatchHttpException,
+    UserAlreadyAuthanticatedHttpException,
     UserAuthException,
     UserAuthHttpException,
     UserDuplicateException,
@@ -34,8 +35,10 @@ async def create_user(data: UserRequestAddSchema, db: DBDep):
 
 @router.post("/login")
 async def authenticate_user(
-    data: Annotated[UserLoginSchema, Form()], response: Response, db: DBDep
+    data: Annotated[UserLoginSchema, Form()], response: Response, db: DBDep, user_id: UserIdDep
 ):
+    if user_id:
+        raise UserAlreadyAuthanticatedHttpException
     try:
         access_token = await AuthService(db).authenticate_user(data)
         response.set_cookie(key="access_token", value=access_token)

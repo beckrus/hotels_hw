@@ -105,6 +105,10 @@ class UserAuthHttpException(BaseHttpException):
     status_code = 401
     detail = "Authentication failed"
 
+class UserAlreadyAuthanticatedHttpException(BaseHttpException):
+    status_code = 200
+    detail = "You are already authenticated"
+
 
 class UserNotFoundException(BaseException):
     detail = "User not found"
@@ -122,7 +126,7 @@ class TokenErrorHttpException(BaseHttpException):
 
 class AccessForbiddenHttpException(BaseHttpException):
     status_code = 401
-    detail = "Forbidden to access"
+    detail = "Access denied, not enough permissions."
 
 
 class BookingNotFoundException(BaseException):

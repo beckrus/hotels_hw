@@ -9,14 +9,14 @@ from src.exceptions import (
     FacilityNotFoundException,
     FacilityNotFoundHttpException,
 )
-from src.api.dependencies import DBDep, get_admin_user
+from src.api.dependencies import DBDep, get_current_user
 
 
 router = APIRouter(prefix="/facilities", tags=["Facilities"])
 
 
 @router.get("")
-@cache(expire=10)
+@cache(expire=1)
 async def get_facilities(
     db: DBDep,
     name: str | None = Query(description="Name", default=None),
@@ -32,7 +32,7 @@ async def get_facility_by_id(facility_id: int, db: DBDep):
         raise FacilityNotFoundHttpException
 
 
-@router.post("", dependencies=[Depends(get_admin_user)])
+@router.post("", dependencies=[Depends(get_current_user)])
 async def create_facility(
     db: DBDep,
     data: FacilitiesAddSchema = Body(
@@ -56,7 +56,7 @@ async def create_facility(
         raise FacilityDuplicateHTTPException
 
 
-@router.patch("/{facility_id}", dependencies=[Depends(get_admin_user)])
+@router.patch("/{facility_id}", dependencies=[Depends(get_current_user)])
 async def update_facility(facility_id: int, data: FacilitiesAddSchema, db: DBDep):
     try:
         facility = await FacilitiesService(db).update_facility(facility_id, data)
@@ -65,7 +65,7 @@ async def update_facility(facility_id: int, data: FacilitiesAddSchema, db: DBDep
         raise FacilityNotFoundHttpException
 
 
-@router.delete("/{facility_id}", dependencies=[Depends(get_admin_user)])
+@router.delete("/{facility_id}", dependencies=[Depends(get_current_user)])
 async def delete_facility(facility_id: int, db: DBDep):
     try:
         await FacilitiesService(db).delete(facility_id)

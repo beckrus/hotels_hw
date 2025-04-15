@@ -7,14 +7,14 @@ from src.exceptions import (
     HotelNotFoundException,
     HotelNotFoundHttpException,
 )
-from src.api.dependencies import DBDep, PaginationDep, get_admin_user
+from src.api.dependencies import DBDep, PaginationDep, get_current_user
 from src.schemas.hotels import HotelAddSchema, HotelPatchSchema, HotelSchema
 
 router = APIRouter(prefix="/hotels", tags=["Hotels"])
 
 
 @router.get("", response_model=list[HotelSchema])
-@cache(expire=10)
+@cache(expire=1)
 async def get_hotels(
     pagination: PaginationDep,
     db: DBDep,
@@ -31,7 +31,7 @@ async def get_hotels(
 
 
 @router.get("/{id}")
-@cache(expire=10)
+@cache(expire=1)
 async def get_hotel_by_id(id: int, db: DBDep):
     try:
         return await HotelsService(db).get_hotel_by_id(id)
@@ -39,7 +39,7 @@ async def get_hotel_by_id(id: int, db: DBDep):
         raise HotelNotFoundHttpException
 
 
-@router.delete("/{hotel_id}", dependencies=[Depends(get_admin_user)])
+@router.delete("/{hotel_id}", dependencies=[Depends(get_current_user)])
 async def delete_hotel(hotel_id: int, db: DBDep):
     try:
         await HotelsService(db).delete_hotel(hotel_id)
@@ -48,7 +48,7 @@ async def delete_hotel(hotel_id: int, db: DBDep):
         raise HotelNotFoundHttpException
 
 
-@router.post("", dependencies=[Depends(get_admin_user)])
+@router.post("", dependencies=[Depends(get_current_user)])
 async def create_hotel(
     db: DBDep,
     hotel_data: HotelAddSchema = Body(
@@ -68,7 +68,7 @@ async def create_hotel(
     return {"status": "OK", "data": hotel}
 
 
-@router.patch("/{hotel_id}", dependencies=[Depends(get_admin_user)])
+@router.patch("/{hotel_id}", dependencies=[Depends(get_current_user)])
 async def update_hotel(hotel_id: int, hotel_data: HotelPatchSchema, db: DBDep):
     try:
         hotel = await HotelsService(db).update_hotel(hotel_id, hotel_data)
@@ -77,7 +77,7 @@ async def update_hotel(hotel_id: int, hotel_data: HotelPatchSchema, db: DBDep):
         raise HotelNotFoundHttpException
 
 
-@router.put("/{hotel_id}", dependencies=[Depends(get_admin_user)])
+@router.put("/{hotel_id}", dependencies=[Depends(get_current_user)])
 async def rewrite_hotel(hotel_id: int, hotel_data: HotelAddSchema, db: DBDep):
     try:
         hotel = await HotelsService(db).update_hotel(hotel_id, hotel_data)

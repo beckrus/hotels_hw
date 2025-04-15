@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 
-from src.api.dependencies import DBDep, UserIdDep, get_admin_user
+from src.api.dependencies import DBDep, UserIdDep, get_current_user
 from src.services.auth import AuthService
 from src.exceptions import ItemNotFoundException
 from src.schemas.users import UserRequestUpdateSchema
@@ -8,14 +8,14 @@ from src.schemas.users import UserRequestUpdateSchema
 router = APIRouter(prefix="/users", tags=["Users"])
 
 
-@router.get("", dependencies=[Depends(get_admin_user)])
+@router.get("", dependencies=[Depends(get_current_user)])
 async def get_users(db: DBDep):  # Only admins
     users = await db.users.get_all()
     return {"status": "OK", "data": users}
 
 
 @router.get(
-    "/{user_id}", dependencies=[Depends(get_admin_user)]
+    "/{user_id}", dependencies=[Depends(get_current_user)]
 )  # admin or the user itself
 async def get_user_by_id(user_id: int, db: DBDep):
     try:

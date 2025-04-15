@@ -10,13 +10,13 @@ from src.exceptions import (
 )
 from src.services.bookings import BookingsService
 from src.schemas.bookings import BookingsAddSchema
-from src.api.dependencies import DBDep, UserIdDep, get_admin_user
+from src.api.dependencies import DBDep, UserIdDep, get_current_user
 
 
 router = APIRouter(prefix="/bookings", tags=["Bookings"])
 
 
-@router.get("/", dependencies=[Depends(get_admin_user)])
+@router.get("/", dependencies=[Depends(get_current_user)])
 async def get_all_bookings(db: DBDep):
     bookings = await BookingsService(db).get_all_bookings()
     return {"status": "OK", "data": bookings}

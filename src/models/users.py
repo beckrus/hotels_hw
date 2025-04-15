@@ -1,6 +1,6 @@
 from src.database import Base
 from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy import String
+from sqlalchemy import String, Boolean
 
 
 class UsersOrm(Base):
@@ -13,6 +13,6 @@ class UsersOrm(Base):
     email: Mapped[str] = mapped_column(String(200), nullable=True, unique=True)
     phone: Mapped[str] = mapped_column(String(200), nullable=True, unique=True)
     password_hash: Mapped[str] = mapped_column(String(200))
-    is_varified: Mapped[bool]
-    is_active: Mapped[bool]
-    is_superuser: Mapped[bool]
+    is_varified: Mapped[bool] = mapped_column(Boolean, default=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    is_superuser: Mapped[bool] = mapped_column(Boolean, default=False)

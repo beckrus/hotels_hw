@@ -50,8 +50,8 @@ class AuthService(BaseService):
         return payload
 
     async def create_user(self, data: UserRequestAddSchema):
-        data.is_superuser = False
-        data.is_varified = False
+        # data.is_superuser = False
+        # data.is_varified = False
         if data.password != data.password_confirm:
             raise PasswordsNotMatchException
         hashed_password = self.hash_password(data.password.get_secret_value())
