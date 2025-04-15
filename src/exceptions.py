@@ -136,3 +136,7 @@ class BookingNotFoundException(BaseException):
 class BookingNotFoundHttpException(BaseHttpException):
     status_code = 404
     detail = "Booking not found"
+
+class HotelDumpicateHttpException(BaseHttpException):
+    status_code = 409
+    detail = "Hotel with these name and location already exist"

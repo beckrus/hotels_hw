@@ -55,7 +55,7 @@ class BaseRepository(Generic[T]):
                 f"Can't add data in DB, error type: {type(e.orig.__cause__)=}, input data: {data}"
             )
             if e.orig.sqlstate == "23505":
-                raise DuplicateItemException
+                raise DuplicateItemException from e
             else:
                 logging.critical(
                     f"Unknown error occurred, error type: {type(e.orig.__cause__)=}, input data: {data}, source: BaseRepository.add"

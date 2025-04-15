@@ -1,6 +1,6 @@
 from datetime import date
 from src.api.dependencies import PaginationDep
-from src.exceptions import HotelNotFoundException, ItemNotFoundException
+from src.exceptions import DuplicateItemException, HotelDumpicateHttpException, HotelNotFoundException, ItemNotFoundException
 from src.services.base import BaseService
 
 
@@ -29,9 +29,12 @@ class HotelsService(BaseService):
             raise HotelNotFoundException from e
 
     async def create_hotel(self, hotel_data):
-        hotel = await self.db.hotels.add(hotel_data)
-        await self.db.commit()
-        return hotel
+        try:
+            hotel = await self.db.hotels.add(hotel_data)
+            await self.db.commit()
+            return hotel
+        except DuplicateItemException:
+            raise HotelDumpicateHttpException
 
     async def update_hotel(self, hotel_id: int, hotel_data):
         try:
