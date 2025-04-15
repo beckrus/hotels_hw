@@ -38,6 +38,7 @@ async def authenticate_user(
     data: Annotated[UserLoginSchema, Form()], request:Request,response: Response, db: DBDep
 ):
     token = request.cookies.get("access_token")
+    print(token)
     if token:
         if get_current_user(request, token):
             raise UserAlreadyAuthanticatedHttpException

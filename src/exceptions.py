@@ -121,7 +121,7 @@ class UserNotFoundHttpException(BaseHttpException):
 
 class TokenErrorHttpException(BaseHttpException):
     status_code = 401
-    detail = "Could not validate credentials"
+    detail = "Could not validate credentials, bad token. Try relogin or delete access_token from cookies."
 
 
 class AccessForbiddenHttpException(BaseHttpException):
