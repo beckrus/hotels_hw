@@ -1,7 +1,7 @@
 from typing import Annotated
-from fastapi import APIRouter, Form, Response, Request
+from fastapi import APIRouter, Depends, Form, Response, Request
 
-from src.api.dependencies import DBDep, UserIdDep
+from src.api.dependencies import DBDep, UserIdDep, get_current_user, oauth2_scheme
 from src.services.auth import AuthService
 from src.exceptions import (
     PasswordsNotMatchException,
@@ -35,10 +35,12 @@ async def create_user(data: UserRequestAddSchema, db: DBDep):
 
 @router.post("/login")
 async def authenticate_user(
-    data: Annotated[UserLoginSchema, Form()], response: Response, db: DBDep, user_id: UserIdDep
+    data: Annotated[UserLoginSchema, Form()], request:Request,response: Response, db: DBDep
 ):
-    if user_id:
-        raise UserAlreadyAuthanticatedHttpException
+    token = request.cookies.get("access_token")
+    if token:
+        if get_current_user(request, token):
+            raise UserAlreadyAuthanticatedHttpException
     try:
         access_token = await AuthService(db).authenticate_user(data)
         response.set_cookie(key="access_token", value=access_token)
