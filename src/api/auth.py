@@ -18,6 +18,8 @@ from src.schemas.users import (
     UserLoginSchema,
     UserRequestAddSchema,
 )
+from src.config import settings
+
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
@@ -44,7 +46,7 @@ async def authenticate_user(
             raise UserAlreadyAuthanticatedHttpException
     try:
         access_token = await AuthService(db).authenticate_user(data)
-        response.set_cookie(key="access_token", value=access_token)
+        response.set_cookie(key="access_token", value=access_token, max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
         return {"access_token": access_token}
     except UserAuthException:
         raise UserAuthHttpException
