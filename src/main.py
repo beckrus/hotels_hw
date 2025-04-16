@@ -19,6 +19,8 @@ from src.api.facilities import router as facility_router
 from src.api.images import router as image_router
 from src.api.status import router as status_router
 from src.init import redis_manager
+from src.config import settings
+
 
 FORMAT = "%(asctime)s::%(levelname)s::%(message)s"
 logging.basicConfig(level=logging.INFO, format=FORMAT, datefmt="%d/%m/%Y %I:%M:%S")
@@ -51,4 +53,9 @@ app.include_router(image_router)
 app.include_router(status_router)
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", reload=True, host="0.0.0.0", port=8000)
+    uv_settings = {
+        "app":"main:app", "reload":True, "host":"0.0.0.0", "port":8000
+    }
+    if settings.MODE == "PROD":
+        uv_settings['reload'] = False
+    uvicorn.run(**uv_settings)

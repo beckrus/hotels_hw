@@ -56,7 +56,6 @@ async def test_post_login_me_logout(
     res_add = await ac.post(
         "/auth/login",
         data={
-            "grant_type": "string",
             "username": username,
             "password": password,
         },
@@ -65,6 +64,15 @@ async def test_post_login_me_logout(
     if status_code != 200:
         return
 
+    res_add = await ac.post(
+        "/auth/login",
+        data={
+            "username": username,
+            "password": password,
+        },
+    )
+    assert res_add.status_code == status_code
+    
     assert ac.cookies.get("access_token")
 
     res_me = await ac.get("/auth/me")
