@@ -8,9 +8,9 @@ class UserSchema(BaseModel):
     last_name: str | None = None
     email: EmailStr | None = None
     # phone: Annotated[str, StringConstraints(min_length=6)] | None = None
-    #is_varified: bool = False
-    #is_active: bool = True
-    #is_superuser: bool = False
+    # is_varified: bool = False
+    # is_active: bool = True
+    # is_superuser: bool = False
 
     model_config = ConfigDict(from_attributes=True)
 

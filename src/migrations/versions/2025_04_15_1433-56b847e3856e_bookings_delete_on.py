@@ -9,7 +9,7 @@ Create Date: 2025-04-15 14:33:05.974532
 from typing import Sequence, Union
 
 from alembic import op
-import sqlalchemy as sa
+import sqlalchemy as sa  # noqa F401
 
 
 revision: str = "56b847e3856e"

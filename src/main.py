@@ -38,7 +38,7 @@ async def lifespan(app: FastAPI):
 # if settings.MODE == 'TEST':
 #     FastAPICache.init(InMemoryBackend(), prefix="fastapi-cache")
 
-app = FastAPI(lifespan=lifespan, title='Bookings')
+app = FastAPI(lifespan=lifespan, title="Bookings")
 
 
 app.include_router(auth_router)

@@ -11,6 +11,7 @@ from sqlalchemy.exc import IntegrityError
 
 T = TypeVar("T")
 
+
 class BaseRepository(Generic[T]):
     model: Type[T]
     mapper: DataMapper

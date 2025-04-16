@@ -103,7 +103,8 @@ class UserAuthException(BaseException):
 
 class UserAuthHttpException(BaseHttpException):
     status_code = 401
-    detail = "Authentication failed"
+    detail = "Username or password is incorrect"
+
 
 class UserAlreadyAuthanticatedHttpException(BaseHttpException):
     status_code = 200
@@ -136,6 +137,7 @@ class BookingNotFoundException(BaseException):
 class BookingNotFoundHttpException(BaseHttpException):
     status_code = 404
     detail = "Booking not found"
+
 
 class HotelDumpicateHttpException(BaseHttpException):
     status_code = 409
