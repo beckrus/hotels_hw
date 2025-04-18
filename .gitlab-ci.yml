@@ -8,7 +8,7 @@ build-job:
   before_script: 
     - cp ${PROD_ENV} .env
     - cp ${TEST_ENV} .env-test
-    - cat .env
+    - ls -lah
   script:
     - docker build -t booking-api-image .
 
