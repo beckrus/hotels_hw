@@ -3,8 +3,6 @@ services:
     container_name: "booking_backend"
     image: booking-api-image:latest
     restart: unless-stopped
-    env_file:
-      - .env
     ports:
       - 8000:8000
     depends_on:
@@ -39,8 +37,6 @@ services:
     container_name: "booking_celery_worker"
     image: booking-api-image:latest
     command: "celery --app=src.tasks.celery_app:celery_instance worker -l INFO"
-    env_file:
-      - .env
     depends_on:
       - backend
     networks:
@@ -50,8 +46,6 @@ services:
     container_name: "booking_celery_beat"
     image: booking-api-image:latest
     command: "celery --app=src.tasks.celery_app:celery_instance beat -l INFO"
-    env_file:
-      - .env
     depends_on:
       - backend
     networks:
@@ -61,8 +55,6 @@ services:
     container_name: "booking_flower"
     image: booking-api-image:latest
     command: "celery --app=src.tasks.celery_app:celery_instance flower --port=5555"
-    env_file:
-      - .env
     ports:
       - 5555:5555
     depends_on:
