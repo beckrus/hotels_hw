@@ -8,6 +8,7 @@ build-job:
   before_script: 
     - cp ${PROD_ENV} .env
     - cp ${TEST_ENV} .env-test
+    - cat .env
   script:
     - docker build -t booking-api-image .
 
@@ -15,3 +16,4 @@ deploy-job:
   stage: deploy
   script:
     - docker compose -f docker-compose-ci.yml up -d
+    - nginx -s reload

@@ -1,0 +1,37 @@
+services:
+  db:
+    image: postgres
+    container_name: 'booking_db'
+    restart: always
+    shm_size: 128mb
+    ports:
+      - 5431:5432
+    volumes:
+      - ./postgres_data:/data/postgres
+    environment:
+      POSTGRES_USER: hotels
+      POSTGRES_PASSWORD: hotels
+      POSTGRES_DB: hotels
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -d postgres" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+       - booking_net
+       
+  redis:
+    image: redis:7.4-alpine
+    container_name: 'booking_redis'
+    restart: always
+    volumes: 
+      - ./cache:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
+    networks:
+       - booking_net
+
+networks:
+   booking_net:
+    name: booking_net
+    external: true

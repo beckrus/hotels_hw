@@ -76,3 +76,4 @@ services:
 networks:
    booking_net:
     name: booking_net
+    
