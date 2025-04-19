@@ -1,12 +1,13 @@
 stages:
   - build
+  - lint_format
+  - migrations
   - test
   - deploy
 
-#BUILD STAGE
-#formatter&linter
+
 .base_ruff:
-  stage: build
+  stage: lint_format
   interruptible: true
   image:
     name: ghcr.io/astral-sh/ruff:0.11.6-alpine
@@ -19,13 +20,22 @@ Ruff Check:
   script:
     - ruff check --output-format=gitlab
 
-
 Ruff Format:
   extends: .base_ruff
   script:
     - ruff format --diff
-#build image
-build-image:
+
+
+Migrations:
+  stage: migrations
+  script: docker run --rm --network booking_net booking-api-image alembic upgrade head
+
+
+Tests:
+  stage: docker run --rm --network booking_net booking-api-image pytest -s -v
+
+
+Build Image:
   stage: build
   before_script: 
     - cp ${PROD_ENV} .env
@@ -34,15 +44,8 @@ build-image:
   script:
     - docker build -t booking-api-image .
 
-#TESTS STAGE
-pytest:
-  stage: test
-  image: localhost:5000/booking-api-image:latest
-  script:
-    - pytest
 
-#DEPLOY STAGE
-deploy-app:
+Deploy App:
   stage: deploy
   script:
     - docker compose -f docker-compose-ci.yml up -d
