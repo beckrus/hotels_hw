@@ -53,7 +53,7 @@ app.include_router(facility_router)
 app.include_router(image_router)
 app.include_router(status_router)
 
-app.add_middleware(CORSMiddleware, allow_origins = ['*'])
+app.add_middleware(CORSMiddleware, allow_origins=["*"])
 
 if __name__ == "__main__":
     uv_settings = {"app": "main:app", "reload": True, "host": "0.0.0.0", "port": 8000}
