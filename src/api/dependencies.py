@@ -47,7 +47,7 @@ def get_current_user(request: Request, token: str = Depends(oauth2_scheme)) -> i
 
 
 async def get_admin_user(
-    request: Request, user_id: str = Depends(get_current_user)
+    request: Request, user_id: int = Depends(get_current_user)
 ) -> int:
     async with async_session_maker() as session:
         users_repo = UsersRepository(session)
