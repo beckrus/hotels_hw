@@ -28,11 +28,13 @@ Ruff Format:
 
 Migrations:
   stage: migrations
-  script: docker run --rm --network booking_net booking-api-image alembic upgrade head
+  script: 
+    - docker run --rm --network booking_net booking-api-image alembic upgrade head
 
 
 Tests:
-  stage: docker run --rm --network booking_net booking-api-image pytest -s -v
+  stage: 
+    - docker run --rm --network booking_net booking-api-image pytest -s -v
 
 
 Build Image:
