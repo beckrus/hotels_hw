@@ -3,7 +3,31 @@ stages:
   - test
   - deploy
 
-build-job:
+#BUILD STAGE
+#formatter&linter
+.base_ruff:
+  stage: build
+  interruptible: true
+  image:
+    name: ghcr.io/astral-sh/ruff:0.11.6-alpine
+  before_script:
+    - cd $CI_PROJECT_DIR
+    - ruff --version
+
+Ruff Check:
+  extends: .base_ruff
+  script:
+    - ruff check --output-format=gitlab > code-quality-report.json
+  artifacts:
+    reports:
+      codequality: $CI_PROJECT_DIR/code-quality-report.json
+
+Ruff Format:
+  extends: .base_ruff
+  script:
+    - ruff format --diff
+#build image
+build-image:
   stage: build
   before_script: 
     - cp ${PROD_ENV} .env
@@ -12,7 +36,22 @@ build-job:
   script:
     - docker build -t booking-api-image .
 
-deploy-job:
+#TESTS STAGE
+pytest:
+  stage: test
+  image: booking-api-image:latest
+  cache:
+    - key:
+        files:
+          - uv.lock
+      paths:
+        - .uv-cache
+  script:
+    - uv sync --all-extras
+    - uv run pytest
+
+#DEPLOY STAGE
+deploy-app:
   stage: deploy
   script:
     - docker compose -f docker-compose-ci.yml up -d
