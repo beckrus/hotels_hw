@@ -11,16 +11,16 @@ stages:
   image:
     name: ghcr.io/astral-sh/ruff:0.11.6-alpine
   before_script:
-    - cd $CI_PROJECT_DIR
+    - ls -lah
     - ruff --version
 
 Ruff Check:
   extends: .base_ruff
   script:
-    - ruff check --output-format=gitlab > code-quality-report.json
-  artifacts:
-    reports:
-      codequality: $CI_PROJECT_DIR/code-quality-report.json
+    - ruff check --output-format=gitlab # > code-quality-report.json
+  # artifacts:
+  #   reports:
+  #     codequality: $CI_PROJECT_DIR/code-quality-report.json
 
 Ruff Format:
   extends: .base_ruff
