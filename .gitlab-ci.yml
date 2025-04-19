@@ -33,7 +33,8 @@ Migrations:
 
 
 Tests:
-  stage: 
+  stage: test
+  script:
     - docker run --rm --network booking_net booking-api-image pytest -s -v
 
 
