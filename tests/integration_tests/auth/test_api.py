@@ -72,7 +72,7 @@ async def test_post_login_me_logout(
         },
     )
     assert res_add.status_code == status_code
-    
+
     assert ac.cookies.get("access_token")
 
     res_me = await ac.get("/auth/me")

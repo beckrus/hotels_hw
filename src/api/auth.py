@@ -43,7 +43,7 @@ async def authenticate_user(
             key="access_token",
             value=access_token,
             max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES,
-            httponly=True
+            httponly=True,
         )
         return {"access_token": access_token}
     except UserAuthException:

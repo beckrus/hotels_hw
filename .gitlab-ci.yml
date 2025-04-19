@@ -17,10 +17,8 @@ stages:
 Ruff Check:
   extends: .base_ruff
   script:
-    - ruff check --output-format=gitlab # > code-quality-report.json
-  # artifacts:
-  #   reports:
-  #     codequality: $CI_PROJECT_DIR/code-quality-report.json
+    - ruff check --output-format=gitlab
+
 
 Ruff Format:
   extends: .base_ruff
