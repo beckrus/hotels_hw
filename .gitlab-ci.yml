@@ -37,16 +37,9 @@ build-image:
 #TESTS STAGE
 pytest:
   stage: test
-  image: booking-api-image:latest
-  cache:
-    - key:
-        files:
-          - uv.lock
-      paths:
-        - .uv-cache
+  image: localhost:5000/booking-api-image:latest
   script:
-    - uv sync --all-extras
-    - uv run pytest
+    - pytest
 
 #DEPLOY STAGE
 deploy-app:
